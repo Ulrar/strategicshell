@@ -20,7 +20,7 @@ data Body = Body
     y       :: Double,
     dfp     :: Double,
     curOr   :: Double,
-    radius  :: Double,
+    size    :: Double,
     cbodies :: [Body]
   }
 
@@ -47,9 +47,9 @@ data Model = Model
   {
     systems     :: [SolarSystem],
     dispSysId   :: Int,
-    size        :: V2 Int,
-    offset      :: V2 Double,
-    zoom        :: Double
+    screenSize  :: V2 Int,
+    viewOffset  :: V2 Double,
+    viewZoom    :: Double
   }
 
 
