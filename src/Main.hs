@@ -20,16 +20,17 @@ calcObjectCoord r t px py = (px + (sine $ Degrees t) * r, py + (cosine $ Degrees
 
 initial size offset zoom = (Model (genUniverse) 0 size offset zoom, Cmd.none)
 
-makeOrbit px py (Body _ _ dfp t r b) =
+makeOrbit 0 0 (Body 0 0 0 0 c r b) = Body 0 0 0 0 c r $ L.map (makeOrbit 0 0) b
+makeOrbit px py (Body _ _ dfp t c r b) =
   let nt = (if t > 360 then t - 360 else t) + (360 / dfp) in
   let (x, y) = calcObjectCoord dfp nt px py in
-  Body x y dfp nt r $ L.map (makeOrbit x y) b
+  Body x y dfp nt c r $ L.map (makeOrbit x y) b
 
 changeOffset ix iy (V2 x y) = V2 (x + ix) (y + iy)
 
 update :: Model -> Action -> (Model, Cmd SDLEngine Action)
 update model (WindowResized size) = (model { screenSize = size }, Cmd.none)
-update model (Tick t)             = (model { systems = L.map (\s -> SolarSystem (L.map (makeOrbit 0 0) $ bodies s) []) $ systems model }, Cmd.none)
+update model (Tick t)             = (model { systems = L.map (\s -> SolarSystem (makeOrbit 0 0 $ sun s) []) $ systems model }, Cmd.none)
 -- Zooming
 update model (KeyPressed KB.KeypadPlusKey)  = (model { viewZoom = (viewZoom model) + 0.1 }, Cmd.none)
 update model (KeyPressed KB.KeypadMinusKey) = (model { viewZoom = (viewZoom model) - 0.1 }, Cmd.none)

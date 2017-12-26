@@ -8,6 +8,7 @@ module Types
          Model(..),
        ) where
 
+import           Helm.Color
 import qualified Helm.Keyboard as KB
 
 import           Linear.V2     (V2(V2))
@@ -20,6 +21,7 @@ data Body = Body
     y       :: Double,
     dfp     :: Double,
     curOr   :: Double,
+    color   :: Color,
     size    :: Double,
     cbodies :: [Body]
   }
@@ -39,7 +41,7 @@ data Fleet = Fleet
 
 data SolarSystem = SolarSystem
   {
-    bodies          :: [Body],
+    sun             :: Body,
     fleets          :: [Fleet]
   }
 
