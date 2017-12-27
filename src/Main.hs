@@ -20,11 +20,16 @@ calcObjectCoord r t px py = (px + (sine $ Degrees t) * r, py + (cosine $ Degrees
 
 initial size offset zoom = (Model (genUniverse) 0 size offset zoom, Cmd.none)
 
+makeOrbit :: Double -> Double -> Body -> Body
+-- Don't do anything for the sun
 makeOrbit 0 0 (Body 0 0 0 0 c r b) = Body 0 0 0 0 c r $ L.map (makeOrbit 0 0) b
-makeOrbit px py (Body _ _ dfp t c r b) =
-  let nt = (if t > 360 then t - 360 else t) + (360 / dfp) in
-  let (x, y) = calcObjectCoord dfp nt px py in
-  Body x y dfp nt c r $ L.map (makeOrbit x y) b
+-- Orbit
+makeOrbit px py b =
+  let t = curOr b in
+  let d = dfp b in
+  let nt = (if t > 360 then t - 360 else t) + (360 / d) in
+  let (x, y) = calcObjectCoord d nt px py in
+  b { x = x, y = y, curOr = nt, cbodies = L.map (makeOrbit x y) $ cbodies b }
 
 changeOffset ix iy (V2 x y) = V2 (x + ix) (y + iy)
 
