@@ -36,8 +36,11 @@ data Fleet = Fleet
   {
     fx               :: Double,
     fy               :: Double,
-    ships            :: [Ship]
-  }
+    speed            :: Int,
+    ships            :: [Ship],
+    fdestx           :: Double,
+    fdesty           :: Double
+}
 
 data SolarSystem = SolarSystem
   {

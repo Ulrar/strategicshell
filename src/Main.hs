@@ -31,14 +31,19 @@ makeOrbit px py b =
   let (x, y) = calcObjectCoord d nt px py in
   b { x = x, y = y, curOr = nt, cbodies = L.map (makeOrbit x y) $ cbodies b }
 
+subc o d s =
+  let x = o - d in
+  if (abs x) >= (fromIntegral s) then (fromIntegral s) else x
+makeFleetMove f = f { fx = (fx f) + subc (fx f) (fdestx f) (speed f), fy = (fy f) + subc (fy f) (fdesty f) (speed f) }
+
 changeOffset ix iy (V2 x y) = V2 (x + ix) (y + iy)
 
 -- Test
-spawnFleet (h:t) = (h { fleets = [Fleet { fx = 150, fy = 150, ships = [Ship { hp = 100, blah = "blah" }] }] }):t
+spawnFleet (h:t) = (h { fleets = [Fleet { fx = 150, fy = 150, speed = 10, fdestx = 900, fdesty = 900, ships = [Ship { hp = 100, blah = "blah" }] }] }):t
 
 update :: Model -> Action -> (Model, Cmd SDLEngine Action)
 update model (WindowResized size) = (model { screenSize = size }, Cmd.none)
-update model (Tick t)             = (model { systems = L.map (\s -> SolarSystem (makeOrbit 0 0 $ sun s) $ fleets s) $ systems model }, Cmd.none)
+update model (Tick t)             = (model { systems = L.map (\s -> SolarSystem (makeOrbit 0 0 $ sun s) $ L.map makeFleetMove $ fleets s) $ systems model }, Cmd.none)
 -- Zooming
 update model (KeyPressed KB.KeypadPlusKey)  = (model { viewZoom = (viewZoom model) + 0.1 }, Cmd.none)
 update model (KeyPressed KB.KeypadMinusKey) = (model { viewZoom = (viewZoom model) - 0.1 }, Cmd.none)
