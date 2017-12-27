@@ -33,9 +33,12 @@ makeOrbit px py b =
 
 changeOffset ix iy (V2 x y) = V2 (x + ix) (y + iy)
 
+-- Test
+spawnFleet (h:t) = (h { fleets = [Fleet { fx = 150, fy = 150, ships = [Ship { hp = 100, blah = "blah" }] }] }):t
+
 update :: Model -> Action -> (Model, Cmd SDLEngine Action)
 update model (WindowResized size) = (model { screenSize = size }, Cmd.none)
-update model (Tick t)             = (model { systems = L.map (\s -> SolarSystem (makeOrbit 0 0 $ sun s) []) $ systems model }, Cmd.none)
+update model (Tick t)             = (model { systems = L.map (\s -> SolarSystem (makeOrbit 0 0 $ sun s) $ fleets s) $ systems model }, Cmd.none)
 -- Zooming
 update model (KeyPressed KB.KeypadPlusKey)  = (model { viewZoom = (viewZoom model) + 0.1 }, Cmd.none)
 update model (KeyPressed KB.KeypadMinusKey) = (model { viewZoom = (viewZoom model) - 0.1 }, Cmd.none)
@@ -44,6 +47,8 @@ update model (KeyPressed KB.LeftKey)        = (model { viewOffset = changeOffset
 update model (KeyPressed KB.RightKey)       = (model { viewOffset = changeOffset 50    0  $ viewOffset model }, Cmd.none)
 update model (KeyPressed KB.DownKey)        = (model { viewOffset = changeOffset 0    50  $ viewOffset model }, Cmd.none)
 update model (KeyPressed KB.UpKey)          = (model { viewOffset = changeOffset 0  (-50) $ viewOffset model }, Cmd.none)
+-- Test
+update model (KeyPressed KB.NKey)           = (model { systems = spawnFleet $ systems model }, Cmd.none)
 
 subscriptions :: Sub SDLEngine Action
 subscriptions = Sub.batch [Time.every (Time.millisecond * 70) Tick, Win.resizes WindowResized, KB.presses (\b -> KeyPressed b)]

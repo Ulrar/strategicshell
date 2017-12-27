@@ -16,6 +16,10 @@ renderBody zoom offset ss b = move (inGameToScreenCoord (x b) (y b) offset ss zo
 
 renderBodies zoom offset ss b = toForm $ collage $ (L.map (renderBody zoom offset ss) b) ++ (L.map ((renderBodies zoom offset ss) . cbodies) b)
 
+renderFleet zoom offset ss f = move (inGameToScreenCoord (fx f) (fy f) offset ss zoom) $ filled (rgb 1 0 0) $ square (5 * zoom)
+
+renderFleets zoom offset ss f = toForm $ collage $ L.map (renderFleet zoom offset ss) f
+
 view :: Model -> Graphics SDLEngine
 view model =
   let zoom = viewZoom model in
@@ -28,4 +32,4 @@ view model =
       then
         []
       else
-        [renderBodies zoom offset ss [sun $ ls L.!! dsi]]
+        [renderBodies zoom offset ss [sun $ ls L.!! dsi]] ++ [renderFleets zoom offset ss $ (fleets $ ls L.!! dsi)]
