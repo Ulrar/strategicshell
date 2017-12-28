@@ -9,7 +9,9 @@ import qualified Helm.Sub        as Sub
 import qualified Helm.Window     as Win
 
 import           Data.Angle
+import           Linear.Vector
 import           Linear.V2       (V2(V2))
+import           Linear.Metric   (distance, quadrance, normalize)
 import qualified Data.List       as L
 
 import           View
@@ -31,15 +33,57 @@ makeOrbit px py b =
   let (x, y) = calcObjectCoord d nt px py in
   b { x = x, y = y, curOr = nt, cbodies = L.map (makeOrbit x y) $ cbodies b }
 
-subc o d s =
-  let x = o - d in
-  if (abs x) >= (fromIntegral s) then (fromIntegral s) else x
-makeFleetMove f = f { fx = (fx f) + subc (fx f) (fdestx f) (speed f), fy = (fy f) + subc (fy f) (fdesty f) (speed f) }
+makeFleetMove f =
+  let cur = V2 (fx f) (fy f) in
+  let dest = V2 (fdestx f) (fdesty f) in
+  if (distance cur dest) < (fromIntegral $ speed f)
+   then
+     f { fx = fdestx f, fy = fdesty f }
+   else
+     let n = normalize $ dest ^-^ cur in
+     let (V2 x y) = n ^* (fromIntegral $ speed f) in
+     f { fx = (fx f + x), fy = (fy f + y) }
+
+---
+--- Thanks to DMGregory's answer on
+--- https://gamedev.stackexchange.com/questions/75015/how-can-i-intercept-object-with-a-circular-motion
+---
+positionAt b t =
+  let (Radians orbitalSpeed) = radians $ Degrees (360 / dfp b) in
+  let angle = (atan2 (x b) (y b)) + t * orbitalSpeed in
+  (V2 (sin angle) (cos angle) ^* (dfp b))
+
+search tMax f b be bx by tCur =
+  if tCur >= tMax
+    then
+      (bx, by)
+    else
+      let (V2 x y) = positionAt b tCur in
+      let sp = fromIntegral $ speed f in
+      let err = (quadrance ((V2 x y) ^-^ (V2 (fx f) (fy f)))) / (sp * sp) - (tCur * tCur) in
+      if (abs err) < be
+        then
+          search tMax f b (abs err) x y (tCur + 1)
+        else
+          search tMax f b be bx by (tCur + 1)
+
+setInterceptBody f b =
+  let shipRadius = distance (V2 (fx f) (fy f)) (V2 0 0) in
+  let shortestDist = abs $ shipRadius - (dfp b) in
+  let sp = fromIntegral $ speed f in
+  let tMin = shortestDist / sp in
+  let tMax = (dfp b) * 2 / sp + (if shipRadius > (dfp b) then tMin else -tMin) in
+  let (x, y) = search tMax f b 99999 0 0 tMin in
+  f { fdestx = x, fdesty = y }
+---
+---
+---
 
 changeOffset ix iy (V2 x y) = V2 (x + ix) (y + iy)
 
 -- Test
 spawnFleet (h:t) = (h { fleets = [Fleet { fx = 150, fy = 150, speed = 10, fdestx = 900, fdesty = 900, ships = [Ship { hp = 100, blah = "blah" }] }] }):t
+moveFleet (h:t) = (h { fleets = [setInterceptBody (head $ fleets h) ((cbodies $ sun h) L.!! 2)] }):t
 
 update :: Model -> Action -> (Model, Cmd SDLEngine Action)
 update model (WindowResized size) = (model { screenSize = size }, Cmd.none)
@@ -54,6 +98,7 @@ update model (KeyPressed KB.DownKey)        = (model { viewOffset = changeOffset
 update model (KeyPressed KB.UpKey)          = (model { viewOffset = changeOffset 0  (-50) $ viewOffset model }, Cmd.none)
 -- Test
 update model (KeyPressed KB.NKey)           = (model { systems = spawnFleet $ systems model }, Cmd.none)
+update model (KeyPressed KB.PKey)           = (model { systems = moveFleet $ systems model }, Cmd.none)
 
 subscriptions :: Sub SDLEngine Action
 subscriptions = Sub.batch [Time.every (Time.millisecond * 70) Tick, Win.resizes WindowResized, KB.presses (\b -> KeyPressed b)]

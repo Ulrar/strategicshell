@@ -5,6 +5,7 @@ import           Linear.V2        (V2(V2))
 import           Helm.Color
 import           Helm.Graphics2D
 import           Helm.Engine.SDL  (SDLEngine)
+import qualified Helm.Graphics2D.Text as HT
 import qualified Data.List        as L
 
 import           Types
@@ -16,7 +17,8 @@ renderBody zoom offset ss b = move (inGameToScreenCoord (x b) (y b) offset ss zo
 
 renderBodies zoom offset ss b = toForm $ collage $ (L.map (renderBody zoom offset ss) b) ++ (L.map ((renderBodies zoom offset ss) . cbodies) b)
 
-renderFleet zoom offset ss f = move (inGameToScreenCoord (fx f) (fy f) offset ss zoom) $ filled (rgb 1 0 0) $ square (5 * zoom)
+--renderFleet zoom offset ss f = move (inGameToScreenCoord (fx f) (fy f) offset ss zoom) $ filled (rgb 1 0 0) $ square (5 * zoom)
+renderFleet zoom offset ss f = toForm $ collage $ [(move (inGameToScreenCoord (fx f) (fy f + 20) offset ss zoom) $ text $ HT.color (rgb 1 1 1) $ HT.toText $ (show $ fx f) ++ " , " ++ (show $ fy f) ++ " -> " ++ (show $ fdestx f) ++ " , " ++ (show $ fdesty f))] ++ [(move (inGameToScreenCoord (fx f) (fy f) offset ss zoom) $ filled (rgb 1 0 0) $ square (5 * zoom))]
 
 renderFleets zoom offset ss f = toForm $ collage $ L.map (renderFleet zoom offset ss) f
 
