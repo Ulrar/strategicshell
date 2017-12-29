@@ -36,7 +36,7 @@ data Fleet = Fleet
     fpos             :: V2 Double,
     speed            :: Int,
     ships            :: [Ship],
-    fdest            :: V2 Double
+    fdest            :: Maybe (V2 Double)
 }
 
 data SolarSystem = SolarSystem

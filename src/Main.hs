@@ -34,13 +34,16 @@ makeOrbit pc b =
   b { bpos = coord, curOr = nt, cbodies = L.map (makeOrbit coord) $ cbodies b }
 
 makeFleetMove f =
-  if (distance (fpos f) (fdest f)) < (fromIntegral $ speed f)
-   then
-     f { fdest = fpos f }
-   else
-     let n = normalize $ (fdest f) ^-^ (fpos f) in
-     let mov = n ^* (fromIntegral $ speed f) in
-     f { fpos = (fpos f) ^+^ mov }
+  case fdest f of
+    Nothing   -> f
+    Just dest ->
+      if (distance (fpos f) dest) < (fromIntegral $ speed f)
+       then
+         f { fpos = dest, fdest = Nothing }
+       else
+         let n = normalize $ dest ^-^ (fpos f) in
+         let mov = n ^* (fromIntegral $ speed f) in
+         f { fpos = (fpos f) ^+^ mov }
 
 ---
 --- Thanks to DMGregory's answer on
@@ -73,7 +76,7 @@ setInterceptBody f b =
   let tMin = shortestDist / sp in
   let tMax = (dfp b) * 2 / sp + (if shipRadius > (dfp b) then tMin else -tMin) in
   let dest = search tMax f b 99999 (V2 0 0) tMin in
-  f { fdest = dest }
+  f { fdest = Just dest }
 ---
 ---
 ---
@@ -81,7 +84,7 @@ setInterceptBody f b =
 changeOffset ix iy (V2 x y) = V2 (x + ix) (y + iy)
 
 -- Test
-spawnFleet (h:t) = (h { fleets = [Fleet { fpos = V2 150 150, speed = 10, fdest = V2 900 900, ships = [Ship { hp = 100, blah = "blah" }] }] }):t
+spawnFleet (h:t) = (h { fleets = [Fleet { fpos = V2 150 150, speed = 10, fdest = Nothing, ships = [Ship { hp = 100, blah = "blah" }] }] }):t
 moveFleet (h:t) = (h { fleets = [setInterceptBody (head $ fleets h) ((cbodies $ sun h) L.!! 2)] }):t
 
 update :: Model -> Action -> (Model, Cmd SDLEngine Action)
