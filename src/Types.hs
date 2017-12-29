@@ -17,8 +17,7 @@ data Action = Tick Double | WindowResized (V2 Int) | KeyPressed KB.Key
 
 data Body = Body
   {
-    x       :: Double,
-    y       :: Double,
+    bpos    :: V2 Double,
     dfp     :: Double,
     curOr   :: Double,
     color   :: Color,
@@ -34,12 +33,10 @@ data Ship = Ship
 
 data Fleet = Fleet
   {
-    fx               :: Double,
-    fy               :: Double,
+    fpos             :: V2 Double,
     speed            :: Int,
     ships            :: [Ship],
-    fdestx           :: Double,
-    fdesty           :: Double
+    fdest            :: V2 Double
 }
 
 data SolarSystem = SolarSystem

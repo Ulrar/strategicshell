@@ -10,15 +10,14 @@ import qualified Data.List        as L
 
 import           Types
 
-inGameToScreenCoord :: Double -> Double -> V2 Double -> V2 Int -> Double -> V2 Double
-inGameToScreenCoord x y (V2 offsetx offsety) (V2 screenx screeny) zoom = V2 (zoom * (x - offsetx) + (fromIntegral screenx / 2)) (zoom * (y - offsety) + (fromIntegral screeny / 2))
+inGameToScreenCoord :: V2 Double -> V2 Double -> V2 Int -> Double -> V2 Double
+inGameToScreenCoord (V2 x y) (V2 offsetx offsety) (V2 screenx screeny) zoom = V2 (zoom * (x - offsetx) + (fromIntegral screenx / 2)) (zoom * (y - offsety) + (fromIntegral screeny / 2))
 
-renderBody zoom offset ss b = move (inGameToScreenCoord (x b) (y b) offset ss zoom) $ filled (color b) $ circle ((size b) * zoom)
+renderBody zoom offset ss b = move (inGameToScreenCoord (bpos b) offset ss zoom) $ filled (color b) $ circle ((size b) * zoom)
 
 renderBodies zoom offset ss b = toForm $ collage $ (L.map (renderBody zoom offset ss) b) ++ (L.map ((renderBodies zoom offset ss) . cbodies) b)
 
---renderFleet zoom offset ss f = move (inGameToScreenCoord (fx f) (fy f) offset ss zoom) $ filled (rgb 1 0 0) $ square (5 * zoom)
-renderFleet zoom offset ss f = toForm $ collage $ [(move (inGameToScreenCoord (fx f) (fy f + 20) offset ss zoom) $ text $ HT.color (rgb 1 1 1) $ HT.toText $ (show $ fx f) ++ " , " ++ (show $ fy f) ++ " -> " ++ (show $ fdestx f) ++ " , " ++ (show $ fdesty f))] ++ [(move (inGameToScreenCoord (fx f) (fy f) offset ss zoom) $ filled (rgb 1 0 0) $ square (5 * zoom))]
+renderFleet zoom offset ss f = toForm $ collage $ [(move (inGameToScreenCoord (fpos f + (V2 0 20)) offset ss zoom) $ text $ HT.color (rgb 1 1 1) $ HT.toText $ (show $ fpos f) ++ " -> " ++ (show $ fdest f))] ++ [(move (inGameToScreenCoord (fpos f) offset ss zoom) $ filled (rgb 1 0 0) $ square (5 * zoom))]
 
 renderFleets zoom offset ss f = toForm $ collage $ L.map (renderFleet zoom offset ss) f
 

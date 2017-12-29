@@ -18,63 +18,62 @@ import           View
 import           Types
 import           Generation
 
-calcObjectCoord r t px py = (px + (sine $ Degrees t) * r, py + (cosine $ Degrees t) * r)
+calcObjectCoord r t (V2 px py) = V2 (px + (sine $ Degrees t) * r) (py + (cosine $ Degrees t) * r)
 
 initial size offset zoom = (Model (genUniverse) 0 size offset zoom, Cmd.none)
 
-makeOrbit :: Double -> Double -> Body -> Body
+makeOrbit :: V2 Double -> Body -> Body
 -- Don't do anything for the sun
-makeOrbit 0 0 (Body 0 0 0 0 c r b) = Body 0 0 0 0 c r $ L.map (makeOrbit 0 0) b
+makeOrbit (V2 0 0) (Body (V2 0 0) 0 0 c r b) = Body (V2 0 0) 0 0 c r $ L.map (makeOrbit (V2 0 0)) b
 -- Orbit
-makeOrbit px py b =
+makeOrbit pc b =
   let t = curOr b in
   let d = dfp b in
   let nt = (if t > 360 then t - 360 else t) + (360 / d) in
-  let (x, y) = calcObjectCoord d nt px py in
-  b { x = x, y = y, curOr = nt, cbodies = L.map (makeOrbit x y) $ cbodies b }
+  let coord = calcObjectCoord d nt pc in
+  b { bpos = coord, curOr = nt, cbodies = L.map (makeOrbit coord) $ cbodies b }
 
 makeFleetMove f =
-  let cur = V2 (fx f) (fy f) in
-  let dest = V2 (fdestx f) (fdesty f) in
-  if (distance cur dest) < (fromIntegral $ speed f)
+  if (distance (fpos f) (fdest f)) < (fromIntegral $ speed f)
    then
-     f { fx = fdestx f, fy = fdesty f }
+     f { fdest = fpos f }
    else
-     let n = normalize $ dest ^-^ cur in
-     let (V2 x y) = n ^* (fromIntegral $ speed f) in
-     f { fx = (fx f + x), fy = (fy f + y) }
+     let n = normalize $ (fdest f) ^-^ (fpos f) in
+     let mov = n ^* (fromIntegral $ speed f) in
+     f { fpos = (fpos f) ^+^ mov }
 
 ---
 --- Thanks to DMGregory's answer on
 --- https://gamedev.stackexchange.com/questions/75015/how-can-i-intercept-object-with-a-circular-motion
 ---
 positionAt b t =
+  let (V2 x y) = bpos b in
   let (Radians orbitalSpeed) = radians $ Degrees (360 / dfp b) in
-  let angle = (atan2 (x b) (y b)) + t * orbitalSpeed in
+  let angle = (atan2 x y) + t * orbitalSpeed in
   (V2 (sin angle) (cos angle) ^* (dfp b))
 
-search tMax f b be bx by tCur =
+search tMax f b be bc tCur =
   if tCur >= tMax
     then
-      (bx, by)
+      bc
     else
-      let (V2 x y) = positionAt b tCur in
+      let coord = positionAt b tCur in
       let sp = fromIntegral $ speed f in
-      let err = (quadrance ((V2 x y) ^-^ (V2 (fx f) (fy f)))) / (sp * sp) - (tCur * tCur) in
+      let err = (quadrance (coord ^-^ (fpos f))) / (sp * sp) - (tCur * tCur) in
       if (abs err) < be
         then
-          search tMax f b (abs err) x y (tCur + 1)
+          search tMax f b (abs err) coord (tCur + 1)
         else
-          search tMax f b be bx by (tCur + 1)
+          search tMax f b be bc (tCur + 1)
 
 setInterceptBody f b =
-  let shipRadius = distance (V2 (fx f) (fy f)) (V2 0 0) in
+  let shipRadius = distance (fpos f) (V2 0 0) in
   let shortestDist = abs $ shipRadius - (dfp b) in
   let sp = fromIntegral $ speed f in
   let tMin = shortestDist / sp in
   let tMax = (dfp b) * 2 / sp + (if shipRadius > (dfp b) then tMin else -tMin) in
-  let (x, y) = search tMax f b 99999 0 0 tMin in
-  f { fdestx = x, fdesty = y }
+  let dest = search tMax f b 99999 (V2 0 0) tMin in
+  f { fdest = dest }
 ---
 ---
 ---
@@ -82,12 +81,12 @@ setInterceptBody f b =
 changeOffset ix iy (V2 x y) = V2 (x + ix) (y + iy)
 
 -- Test
-spawnFleet (h:t) = (h { fleets = [Fleet { fx = 150, fy = 150, speed = 10, fdestx = 900, fdesty = 900, ships = [Ship { hp = 100, blah = "blah" }] }] }):t
+spawnFleet (h:t) = (h { fleets = [Fleet { fpos = V2 150 150, speed = 10, fdest = V2 900 900, ships = [Ship { hp = 100, blah = "blah" }] }] }):t
 moveFleet (h:t) = (h { fleets = [setInterceptBody (head $ fleets h) ((cbodies $ sun h) L.!! 2)] }):t
 
 update :: Model -> Action -> (Model, Cmd SDLEngine Action)
 update model (WindowResized size) = (model { screenSize = size }, Cmd.none)
-update model (Tick t)             = (model { systems = L.map (\s -> SolarSystem (makeOrbit 0 0 $ sun s) $ L.map makeFleetMove $ fleets s) $ systems model }, Cmd.none)
+update model (Tick t)             = (model { systems = L.map (\s -> SolarSystem (makeOrbit (V2 0 0) $ sun s) $ L.map makeFleetMove $ fleets s) $ systems model }, Cmd.none)
 -- Zooming
 update model (KeyPressed KB.KeypadPlusKey)  = (model { viewZoom = (viewZoom model) + 0.1 }, Cmd.none)
 update model (KeyPressed KB.KeypadMinusKey) = (model { viewZoom = (viewZoom model) - 0.1 }, Cmd.none)
