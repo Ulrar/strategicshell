@@ -27,8 +27,7 @@ data Body = Body
 
 data Ship = Ship
   {
-    hp              :: Int,
-    blah            :: String
+    hp              :: Int
   }
 
 data Fleet = Fleet
@@ -36,6 +35,7 @@ data Fleet = Fleet
     fpos             :: V2 Double,
     speed            :: Int,
     ships            :: [Ship],
+    fname            :: String,
     fdest            :: Maybe (V2 Double)
 }
 

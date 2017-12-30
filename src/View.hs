@@ -19,7 +19,7 @@ renderBody zoom offset ss b = move (inGameToScreenCoord (bpos b) offset ss zoom)
 
 renderBodies zoom offset ss b = toForm $ collage $ (L.map (renderBody zoom offset ss) b) ++ (L.map ((renderBodies zoom offset ss) . cbodies) b)
 
-renderFleet zoom offset ss f = toForm $ collage $ [(move (inGameToScreenCoord (fpos f + (V2 0 20)) offset ss zoom) $ text $ HT.color (rgb 1 1 1) $ HT.toText $ (show $ fpos f) ++ " -> " ++ (show $ fdest f))] ++ [(move (inGameToScreenCoord (fpos f) offset ss zoom) $ filled (rgb 1 0 0) $ square (5 * zoom))]
+renderFleet zoom offset ss f = toForm $ collage $ [(move (inGameToScreenCoord (fpos f + (V2 0 20)) offset ss zoom) $ text $ HT.color (rgb 1 1 1) $ HT.toText $ fname f)] ++ [(move (inGameToScreenCoord (fpos f) offset ss zoom) $ filled (rgb 1 0 0) $ square (5 * zoom))]
 
 renderFleets zoom offset ss f = toForm $ collage $ L.map (renderFleet zoom offset ss) f
 

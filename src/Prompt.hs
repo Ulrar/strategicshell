@@ -27,7 +27,7 @@ processPrompt model key =
   where
 
 -- Test
-spawnFleet (h:t) = (h { fleets = [Fleet { fpos = V2 150 150, speed = 10, fdest = Nothing, ships = [Ship { hp = 100, blah = "blah" }] }] }):t
+spawnFleet (h:t) = (h { fleets = [Fleet { fpos = V2 150 150, speed = 10, fdest = Nothing, fname = "F1", ships = [Ship { hp = 100 }] }] }):t
 moveFleet (h:t) = (h { fleets = [setInterceptBody (head $ fleets h) ((cbodies $ sun h) L.!! 2)] }):t
 
 hKeyToChar k = case k of
