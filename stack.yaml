@@ -37,11 +37,15 @@ resolver: lts-9.18
 # will not be run. This is useful for tweaking upstream packages.
 packages:
 - '.'
+- location:
+    git: https://github.com/z0w0/helm.git
+    commit: 857877c4e03356368f74de4de54212b9fe37f36b
+  extra-dep: true
 # Dependency packages to be pulled from upstream that are not in the resolver
 # (e.g., acme-missiles-0.3)
 extra-deps:
 - AC-Angle-1.0
-- helm-1.0.0
+#- helm-1.0.0
 
 # Override default flag values for local packages and extra-deps
 flags: {}
