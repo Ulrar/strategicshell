@@ -37,7 +37,9 @@ togglePrompt model =
 
 processPrompt model key =
   case prompt model of
-    Just s  -> model { prompt = Just $ s ++ hKeyToChar key }
+    Just s  -> case key of
+      KB.BackspaceKey -> if null s then model else model { prompt = Just $ init s }
+      key'            -> model { prompt = Just $ s ++ hKeyToChar key' }
     Nothing -> case key of
       -- Zooming
       KB.KeypadPlusKey  -> model { viewZoom = (viewZoom model) + 0.1 }
