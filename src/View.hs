@@ -1,4 +1,4 @@
-module View (view) where
+module View (view, changeOffset) where
 
 import           Helm
 import           Linear.V2        (V2(V2))
@@ -9,6 +9,8 @@ import qualified Helm.Graphics2D.Text as HT
 import qualified Data.List        as L
 
 import           Types
+
+changeOffset ix iy (V2 x y) = V2 (x + ix) (y + iy)
 
 inGameToScreenCoord :: V2 Double -> V2 Double -> V2 Int -> Double -> V2 Double
 inGameToScreenCoord (V2 x y) (V2 offsetx offsety) (V2 screenx screeny) zoom = V2 (zoom * (x - offsetx) + (fromIntegral screenx / 2)) (zoom * (y - offsety) + (fromIntegral screeny / 2))
