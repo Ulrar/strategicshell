@@ -24,7 +24,7 @@ update :: Model -> Action -> (Model, Cmd SDLEngine Action)
 update model (WindowResized size) = (model { screenSize = size }, Cmd.none)
 update model (Tick t)             = (model { systems = L.map (\s -> SolarSystem (makeOrbit (V2 0 0) $ sun s)) $ systems model, fleets = L.map makeFleetMove $ fleets model }, Cmd.none)
 -- Prompt
-update model (KeyPressed KB.ReturnKey) = (if isJust $ prompt model then model { prompt = Nothing } else model { prompt = Just "" }, Cmd.none)
+update model (KeyPressed KB.ReturnKey) = (togglePrompt model, Cmd.none)
 update model (KeyPressed k)            = (processPrompt model k, Cmd.none)
 
 subscriptions :: Sub SDLEngine Action
