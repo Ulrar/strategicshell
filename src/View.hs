@@ -25,10 +25,10 @@ renderFleet zoom offset ss f = toForm $ collage $ (label (fname f) (fpos f) 0 of
 
 renderFleets zoom offset ss f = toForm $ collage $ L.map (renderFleet zoom offset ss) f
 
-renderPrompt ss p =
+renderPrompt (V2 sx sy) p =
   case p of
     Nothing     -> []
-    Just prompt -> [move (V2 0 0) $ text $ HT.alignBottomLeft $ HT.color (rgb 1 1 1) $ HT.toText prompt]
+    Just prompt -> [move (V2 (fromIntegral sx / 2) 0) $ filled (rgb 0.1 0.1 0.1) $ rect (V2 (fromIntegral sx) 40)] ++ [move (V2 0 0) $ text $ HT.alignBottomLeft $ HT.color (rgb 1 1 1) $ HT.toText prompt]
 
 view :: Model -> Graphics SDLEngine
 view model =
