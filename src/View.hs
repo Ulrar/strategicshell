@@ -21,6 +21,11 @@ renderFleet zoom offset ss f = toForm $ collage $ [(move (inGameToScreenCoord (f
 
 renderFleets zoom offset ss f = toForm $ collage $ L.map (renderFleet zoom offset ss) f
 
+renderPrompt ss p =
+  case p of
+    Nothing     -> []
+    Just prompt -> [move (V2 0 0) $ text $ HT.alignBottomLeft $ HT.color (rgb 1 1 1) $ HT.toText prompt]
+
 view :: Model -> Graphics SDLEngine
 view model =
   let zoom = viewZoom model in
@@ -33,4 +38,6 @@ view model =
       then
         []
       else
-        [renderBodies zoom offset ss [sun $ ls L.!! dsi]] ++ [renderFleets zoom offset ss $ (fleets $ ls L.!! dsi)]
+        [renderBodies zoom offset ss [sun $ ls L.!! dsi]] ++
+        [renderFleets zoom offset ss $ (fleets $ ls L.!! dsi)] ++
+        (renderPrompt ss $ prompt model)

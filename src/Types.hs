@@ -51,7 +51,8 @@ data Model = Model
     dispSysId   :: Int,
     screenSize  :: V2 Int,
     viewOffset  :: V2 Double,
-    viewZoom    :: Double
+    viewZoom    :: Double,
+    prompt      :: Maybe String
   }
 
 
