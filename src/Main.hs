@@ -18,11 +18,11 @@ import           Prompt
 import           Movements
 import           Generation
 
-initial size offset zoom = (Model (genUniverse) 0 size offset zoom Nothing, Cmd.none)
+initial size offset zoom = (Model (genUniverse) [] 0 size offset zoom Nothing, Cmd.none)
 
 update :: Model -> Action -> (Model, Cmd SDLEngine Action)
 update model (WindowResized size) = (model { screenSize = size }, Cmd.none)
-update model (Tick t)             = (model { systems = L.map (\s -> SolarSystem (makeOrbit (V2 0 0) $ sun s) $ L.map makeFleetMove $ fleets s) $ systems model }, Cmd.none)
+update model (Tick t)             = (model { systems = L.map (\s -> SolarSystem (makeOrbit (V2 0 0) $ sun s)) $ systems model, fleets = L.map makeFleetMove $ fleets model }, Cmd.none)
 -- Prompt
 update model (KeyPressed KB.ReturnKey) = (if isJust $ prompt model then model { prompt = Nothing } else model { prompt = Just "" }, Cmd.none)
 update model (KeyPressed k)            = (processPrompt model k, Cmd.none)

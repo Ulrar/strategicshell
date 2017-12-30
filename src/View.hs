@@ -41,5 +41,5 @@ view model =
         []
       else
         [renderBodies zoom offset ss [sun $ ls L.!! dsi]] ++
-        [renderFleets zoom offset ss $ (fleets $ ls L.!! dsi)] ++
+        [renderFleets zoom offset ss $ (L.filter (\f -> fSysId f == dsi) $ fleets model)] ++
         (renderPrompt ss $ prompt model)

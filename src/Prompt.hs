@@ -21,14 +21,14 @@ processPrompt model key =
       KB.DownKey        -> model { viewOffset = changeOffset 0    50  $ viewOffset model }
       KB.UpKey          -> model { viewOffset = changeOffset 0  (-50) $ viewOffset model }
       -- Test
-      KB.NKey           -> model { systems = spawnFleet $ systems model }
-      KB.PKey           -> model { systems = moveFleet $ systems model }
+      KB.NKey           -> model { fleets = spawnFleet $ fleets model }
+      KB.PKey           -> model { fleets = moveFleet (fleets model) $ systems model }
       _                 -> model
   where
 
 -- Test
-spawnFleet (h:t) = (h { fleets = [Fleet { fpos = V2 150 150, speed = 10, fdest = Nothing, fname = "F1", ships = [Ship { hp = 100 }] }] }):t
-moveFleet (h:t) = (h { fleets = [setInterceptBody (head $ fleets h) ((cbodies $ sun h) L.!! 2)] }):t
+spawnFleet l = [Fleet { fpos = V2 150 150, fSysId = 0, speed = 10, fdest = Nothing, fname = "F1", ships = [Ship { hp = 100 }] }] ++ l
+moveFleet l s = [setInterceptBody (head l) ((cbodies $ sun $ (s L.!! 0)) L.!! 2)]
 
 hKeyToChar k = case k of
   KB.AKey -> "a"

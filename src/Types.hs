@@ -33,6 +33,7 @@ data Ship = Ship
 data Fleet = Fleet
   {
     fpos             :: V2 Double,
+    fSysId           :: Int,
     speed            :: Int,
     ships            :: [Ship],
     fname            :: String,
@@ -41,13 +42,13 @@ data Fleet = Fleet
 
 data SolarSystem = SolarSystem
   {
-    sun             :: Body,
-    fleets          :: [Fleet]
+    sun             :: Body
   }
 
 data Model = Model
   {
     systems     :: [SolarSystem],
+    fleets      :: [Fleet],
     dispSysId   :: Int,
     screenSize  :: V2 Int,
     viewOffset  :: V2 Double,

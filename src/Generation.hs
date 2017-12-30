@@ -20,6 +20,6 @@ genSolarSystem n g =
   let (nb, ng) = randomR (1, 10) g in
   let (l, ng') = genBody nb ng in
   let (ns, fg) = genSolarSystem (n - 1) ng' in
-  (ns ++ [SolarSystem (Body (V2 0 0) 0 0 (rgb 1 1 1) 100 l) []], fg)
+  (ns ++ [SolarSystem (Body (V2 0 0) 0 0 (rgb 1 1 1) 100 l)], fg)
 
 genUniverse = let (ss, g) = genSolarSystem 100 $ mkStdGen 42 in ss
