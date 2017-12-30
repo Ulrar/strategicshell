@@ -17,7 +17,7 @@ calcObjectCoord r t (V2 px py) = V2 (px + (sine $ Degrees t) * r) (py + (cosine 
 
 makeOrbit :: V2 Double -> Body -> Body
 -- Don't do anything for the sun
-makeOrbit (V2 0 0) (Body (V2 0 0) 0 0 c r b) = Body (V2 0 0) 0 0 c r $ L.map (makeOrbit (V2 0 0)) b
+makeOrbit (V2 0 0) (Body (V2 0 0) n 0 0 c r b) = Body (V2 0 0) n 0 0 c r $ L.map (makeOrbit (V2 0 0)) b
 -- Orbit
 makeOrbit pc b =
   let t = curOr b in

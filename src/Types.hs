@@ -18,6 +18,7 @@ data Action = Tick Double | WindowResized (V2 Int) | KeyPressed KB.Key
 data Body = Body
   {
     bpos    :: V2 Double,
+    bname   :: String,
     dfp     :: Double,
     curOr   :: Double,
     color   :: Color,
