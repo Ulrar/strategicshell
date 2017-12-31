@@ -16,7 +16,8 @@ getBody sid bid ls =
     Just s  -> cbodies (sun s) ^? element bid
 
 moveFunc model [fle, bod] =
-  case L.findIndex (\fleet -> fname fleet == fle) $ fleets model of
+  let fl = fleets model in
+  case L.findIndex (\fleet -> fname fleet == fle) fl of
     Nothing  -> model { prompt = Nothing }
     Just fid ->
       case [(m, n) | let s0 = bod, (m, s1) <- (reads :: ReadS Int) s0, ("-", s2) <- lex s1, (n, "") <- (reads :: ReadS Int) s2] of
@@ -24,8 +25,8 @@ moveFunc model [fle, bod] =
         [(sid, bid)]  -> case getBody (sid - 1) (bid - 1) $ systems model of
           Nothing -> model { prompt = Nothing }
           Just b  ->
-            let nf = setInterceptBody (fleets model L.!! fid) b in
-            model { prompt = Nothing, fleets = fleets model & element fid .~ nf }
+            let nf = setInterceptBody (fl L.!! fid) b in
+            model { prompt = Nothing, fleets = fl & element fid .~ nf }
 moveFunc model _            = model { prompt = Nothing }
 
 funcList =
