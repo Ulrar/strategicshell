@@ -39,15 +39,15 @@ inGameToScreenCoord (V2 x y) viewS =
   let zoom = viewZoom viewS in
   V2 (zoom * (x - offsetx) + (fromIntegral screenx / 2)) (zoom * (y - offsety) + (fromIntegral screeny / 2))
 
-label t p a viewS = [move (inGameToScreenCoord (p + (V2 0 (20 + a))) viewS) $ text $ HT.color (rgb 1 1 1) $ HT.toText $ t]
+label t p a viewS = move (inGameToScreenCoord (p + (V2 0 (20 + a))) viewS) $ text $ HT.color (rgb 1 1 1) $ HT.toText t
 
-renderBody viewS b = toForm $ collage $ (label (bname b) (bpos b) (size b) viewS) ++ [move (inGameToScreenCoord (bpos b) viewS) $ filled (color b) $ circle ((size b) * (viewZoom viewS))]
+renderBody viewS b = group [label (bname b) (bpos b) (size b) viewS, move (inGameToScreenCoord (bpos b) viewS) $ filled (color b) $ circle ((size b) * (viewZoom viewS))]
 
-renderBodies viewS b = toForm $ collage $ (L.map (renderBody viewS) b) ++ (L.map ((renderBodies viewS) . cbodies) b)
+renderBodies viewS b = group [group $ L.map (renderBody viewS) b, group $ L.map ((renderBodies viewS) . cbodies) b]
 
-renderFleet viewS f = toForm $ collage $ (label (fname f) (fpos f) 0 viewS) ++ [(move (inGameToScreenCoord (fpos f) viewS) $ filled (rgb 1 0 0) $ square (5 * (viewZoom viewS)))]
+renderFleet viewS f = group [label (fname f) (fpos f) 0 viewS, move (inGameToScreenCoord (fpos f) viewS) $ filled (rgb 1 0 0) $ square (5 * (viewZoom viewS))]
 
-renderFleets viewS f = toForm $ collage $ L.map (renderFleet viewS) f
+renderFleets viewS f = group $ L.map (renderFleet viewS) f
 
 renderPrompt (V2 sx sy) p =
   case p of

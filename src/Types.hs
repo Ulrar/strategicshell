@@ -1,12 +1,11 @@
 module Types
-       (
-         Action(..),
-         Body(..),
-         Ship(..),
-         Fleet(..),
-         SolarSystem(..),
-         ViewSettings(..),
-         Model(..),
+       ( Action(..)
+       , Body(..)
+       , Ship(..)
+       , Fleet(..)
+       , SolarSystem(..)
+       , ViewSettings(..)
+       , Model(..)
        ) where
 
 import           Helm.Color

@@ -1,6 +1,5 @@
 module Movements
-       (
-         makeOrbit
+       ( makeOrbit
        , makeFleetMove
        , setInterceptBody
        ) where
