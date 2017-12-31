@@ -1,5 +1,6 @@
 module Prompt (processPrompt, togglePrompt) where
 
+import           Control.Lens
 import           Linear.V2       (V2(V2))
 import qualified Helm.Keyboard   as KB
 import qualified Data.List       as L
@@ -14,17 +15,11 @@ deleteN i (h:t)
   | i == 0       = t
   | otherwise    = h : deleteN (i - 1) t
 
-findBody sid bid ls =
-  if L.length ls < sid
-    then
-      Nothing
-    else
-      let s = ls L.!! sid in
-      if L.length (cbodies $ sun s) < bid
-        then
-          Nothing
-        else
-          Just $ cbodies (sun s) L.!! bid
+getBody :: Int -> Int -> [SolarSystem] -> Maybe Body
+getBody sid bid ls =
+  case ls ^? element sid of
+    Nothing -> Nothing
+    Just s  -> cbodies (sun s) ^? element bid
 
 moveFunc model [fle, bod] =
   case L.findIndex (\fleet -> fname fleet == fle) $ fleets model of
@@ -32,7 +27,7 @@ moveFunc model [fle, bod] =
     Just fid ->
       case [(m, n) | let s0 = bod, (m, s1) <- (reads :: ReadS Int) s0, ("-", s2) <- lex s1, (n, "") <- (reads :: ReadS Int) s2] of
         [] -> model { prompt = Nothing }
-        [(sid, bid)]  -> case findBody (sid - 1) (bid - 1) $ systems model of
+        [(sid, bid)]  -> case getBody (sid - 1) (bid - 1) $ systems model of
           Nothing -> model { prompt = Nothing }
           Just b  -> model { prompt = Nothing, fleets = setInterceptBody (fleets model L.!! fid) b : deleteN fid (fleets model) }
 moveFunc model _            = model { prompt = Nothing }
