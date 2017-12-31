@@ -14,15 +14,27 @@ deleteN i (h:t)
   | i == 0       = t
   | otherwise    = h : deleteN (i - 1) t
 
+findBody sid bid ls =
+  if L.length ls < sid
+    then
+      Nothing
+    else
+      let s = ls L.!! sid in
+      if L.length (cbodies $ sun s) < bid
+        then
+          Nothing
+        else
+          Just $ cbodies (sun s) L.!! bid
+
 moveFunc model [fle, bod] =
   case L.findIndex (\fleet -> fname fleet == fle) $ fleets model of
     Nothing  -> model { prompt = Nothing }
     Just fid ->
       case [(m, n) | let s0 = bod, (m, s1) <- (reads :: ReadS Int) s0, ("-", s2) <- lex s1, (n, "") <- (reads :: ReadS Int) s2] of
         [] -> model { prompt = Nothing }
-        [(sid, bid)]  ->
-          let b = cbodies (sun $ systems model L.!! (sid - 1)) L.!! (bid - 1) in
-          model { prompt = Nothing, fleets = setInterceptBody (fleets model L.!! fid) b : deleteN fid (fleets model) }
+        [(sid, bid)]  -> case findBody (sid - 1) (bid - 1) $ systems model of
+          Nothing -> model { prompt = Nothing }
+          Just b  -> model { prompt = Nothing, fleets = setInterceptBody (fleets model L.!! fid) b : deleteN fid (fleets model) }
 moveFunc model _            = model { prompt = Nothing }
 
 funcList =
@@ -34,7 +46,7 @@ execCommand :: Model -> String -> Model
 execCommand model cmd =
   let l = words cmd in
   case L.find (\(c, f) -> c == head l) funcList of
-    Nothing     -> model
+    Nothing     -> model { prompt = Nothing }
     Just (_, f) -> f model $ tail l
 
 togglePrompt :: Model -> Model
