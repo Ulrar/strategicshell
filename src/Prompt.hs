@@ -14,6 +14,7 @@ deleteN i (h:t)
   | i == 0       = t
   | otherwise    = h : deleteN (i - 1) t
 
+execCommand :: Model -> String -> Model
 execCommand model cmd =
   let l = words cmd in
   case head l of
@@ -22,14 +23,15 @@ execCommand model cmd =
       case fid' of
         Nothing  -> model { prompt = Nothing }
         Just fid ->
-          let sid' = takeWhile (\c -> c /= '-') $ l L.!! 2 in
-          let bid' = drop 1 $ dropWhile (\c -> c /= '-') $ l L.!! 2 in
-          let sid = (read sid') - 1 in
-          let bid = (read bid') - 1 in
-          let b = (cbodies $ sun $ (systems model) L.!! sid) L.!! bid in
-          model { prompt = Nothing, fleets = [setInterceptBody (fleets model L.!! fid) b] ++ (deleteN fid $ fleets model) }
+          let sid' = takeWhile (/= '-') $ l L.!! 2 in
+          let bid' = drop 1 $ dropWhile (/= '-') $ l L.!! 2 in
+          let sid = read sid' - 1 in
+          let bid = read bid' - 1 in
+          let b = cbodies (sun $ systems model L.!! sid) L.!! bid in
+          model { prompt = Nothing, fleets = setInterceptBody (fleets model L.!! fid) b : deleteN fid (fleets model) }
     _      -> model { prompt = Nothing }
 
+togglePrompt :: Model -> Model
 togglePrompt model =
   case prompt model of
     Nothing -> model { prompt = Just "" }
@@ -51,13 +53,11 @@ processPrompt model key =
       KB.UpKey          -> model { viewSet = changeOffset 0  (-50) $ viewSet model }
       -- Test
       KB.NKey           -> model { fleets = spawnFleet $ fleets model }
-      KB.PKey           -> model { fleets = moveFleet (fleets model) $ systems model }
       _                 -> model
   where
 
 -- Test
-spawnFleet l = [Fleet { fpos = V2 150 150, fSysId = 0, speed = 10, fdest = Nothing, fname = "f1", ships = [Ship { hp = 100 }] }] ++ l
-moveFleet l s = [setInterceptBody (head l) ((cbodies $ sun $ (s L.!! 0)) L.!! 2)]
+spawnFleet l = Fleet { fpos = V2 150 150, fSysId = 0, speed = 10, fdest = Nothing, fname = "f1", ships = [Ship { hp = 100 }] } : l
 
 hKeyToChar k = case k of
   KB.AKey -> "a"

@@ -18,7 +18,7 @@ import           Prompt
 import           Movements
 import           Generation
 
-initial viewS = (Model (genUniverse) [] viewS Nothing, Cmd.none)
+initial viewS = (Model genUniverse [] viewS Nothing, Cmd.none)
 
 update :: Model -> Action -> (Model, Cmd SDLEngine Action)
 update model (WindowResized size) = (model { viewSet = changeScreenSize size $ viewSet model }, Cmd.none)
@@ -28,7 +28,7 @@ update model (KeyPressed KB.ReturnKey) = (togglePrompt model, Cmd.none)
 update model (KeyPressed k)            = (processPrompt model k, Cmd.none)
 
 subscriptions :: Sub SDLEngine Action
-subscriptions = Sub.batch [Time.every (Time.millisecond * 70) Tick, Win.resizes WindowResized, KB.presses (\b -> KeyPressed b)]
+subscriptions = Sub.batch [Time.every (Time.millisecond * 70) Tick, Win.resizes WindowResized, KB.presses KeyPressed]
 
 main :: IO ()
 main = do
