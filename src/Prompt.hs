@@ -40,9 +40,9 @@ togglePrompt model =
 processPrompt model key =
   case prompt model of
     Just s  -> case key of
-      KB.BackspaceKey -> if null s then model else model { prompt = Just $ init s }
-      key'            -> model { prompt = Just $ s ++ hKeyToChar key' }
-    Nothing -> case key of
+      KB.BackspaceKey   -> if null s then model else model { prompt = Just $ init s }
+      key'              -> model { prompt = Just $ s ++ hKeyToChar key' }
+    Nothing             -> case key of
       -- Zooming
       KB.KeypadPlusKey  -> model { viewSet = changeZoom   0.1  $ viewSet model }
       KB.KeypadMinusKey -> model { viewSet = changeZoom (-0.1) $ viewSet model }
@@ -60,32 +60,32 @@ processPrompt model key =
 spawnFleet l = Fleet { fpos = V2 150 150, fSysId = 0, speed = 10, fdest = Nothing, fname = "f1", ships = [Ship { hp = 100 }] } : l
 
 hKeyToChar k = case k of
-  KB.AKey -> "a"
-  KB.BKey -> "b"
-  KB.CKey -> "c"
-  KB.DKey -> "d"
-  KB.EKey -> "e"
-  KB.FKey -> "f"
-  KB.GKey -> "g"
-  KB.HKey -> "h"
-  KB.IKey -> "i"
-  KB.JKey -> "j"
-  KB.KKey -> "k"
-  KB.LKey -> "l"
-  KB.MKey -> "m"
-  KB.NKey -> "n"
-  KB.OKey -> "o"
-  KB.PKey -> "p"
-  KB.QKey -> "q"
-  KB.RKey -> "r"
-  KB.SKey -> "s"
-  KB.TKey -> "t"
-  KB.UKey -> "u"
-  KB.VKey -> "v"
-  KB.WKey -> "w"
-  KB.XKey -> "x"
-  KB.YKey -> "y"
-  KB.ZKey -> "z"
+  KB.AKey       -> "a"
+  KB.BKey       -> "b"
+  KB.CKey       -> "c"
+  KB.DKey       -> "d"
+  KB.EKey       -> "e"
+  KB.FKey       -> "f"
+  KB.GKey       -> "g"
+  KB.HKey       -> "h"
+  KB.IKey       -> "i"
+  KB.JKey       -> "j"
+  KB.KKey       -> "k"
+  KB.LKey       -> "l"
+  KB.MKey       -> "m"
+  KB.NKey       -> "n"
+  KB.OKey       -> "o"
+  KB.PKey       -> "p"
+  KB.QKey       -> "q"
+  KB.RKey       -> "r"
+  KB.SKey       -> "s"
+  KB.TKey       -> "t"
+  KB.UKey       -> "u"
+  KB.VKey       -> "v"
+  KB.WKey       -> "w"
+  KB.XKey       -> "x"
+  KB.YKey       -> "y"
+  KB.ZKey       -> "z"
   KB.Number1Key -> "1"
   KB.Number2Key -> "2"
   KB.Number3Key -> "3"
