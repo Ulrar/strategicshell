@@ -9,12 +9,6 @@ import           Types
 import           View
 import           Movements
 
-deleteN :: Int -> [a] -> [a]
-deleteN _ []     = []
-deleteN i (h:t)
-  | i == 0       = t
-  | otherwise    = h : deleteN (i - 1) t
-
 getBody :: Int -> Int -> [SolarSystem] -> Maybe Body
 getBody sid bid ls =
   case ls ^? element sid of
@@ -29,7 +23,9 @@ moveFunc model [fle, bod] =
         [] -> model { prompt = Nothing }
         [(sid, bid)]  -> case getBody (sid - 1) (bid - 1) $ systems model of
           Nothing -> model { prompt = Nothing }
-          Just b  -> model { prompt = Nothing, fleets = setInterceptBody (fleets model L.!! fid) b : deleteN fid (fleets model) }
+          Just b  ->
+            let nf = setInterceptBody (fleets model L.!! fid) b in
+            model { prompt = Nothing, fleets = fleets model & element fid .~ nf }
 moveFunc model _            = model { prompt = Nothing }
 
 funcList =
