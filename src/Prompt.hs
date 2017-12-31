@@ -14,16 +14,15 @@ deleteN i (h:t)
   | i == 0       = t
   | otherwise    = h : deleteN (i - 1) t
 
-moveFunc model (fst:snd:[]) =
-  case L.findIndex (\fleet -> fname fleet == fst) $ fleets model of
+moveFunc model [fle, bod] =
+  case L.findIndex (\fleet -> fname fleet == fle) $ fleets model of
     Nothing  -> model { prompt = Nothing }
     Just fid ->
-      let sid' = takeWhile (/= '-') snd in
-      let bid' = drop 1 $ dropWhile (/= '-') snd in
-      let sid = read sid' - 1 in
-      let bid = read bid' - 1 in
-      let b = cbodies (sun $ systems model L.!! sid) L.!! bid in
-      model { prompt = Nothing, fleets = setInterceptBody (fleets model L.!! fid) b : deleteN fid (fleets model) }
+      case [(m, n) | let s0 = bod, (m, s1) <- (reads :: ReadS Int) s0, ("-", s2) <- lex s1, (n, "") <- (reads :: ReadS Int) s2] of
+        [] -> model { prompt = Nothing }
+        [(sid, bid)]  ->
+          let b = cbodies (sun $ systems model L.!! (sid - 1)) L.!! (bid - 1) in
+          model { prompt = Nothing, fleets = setInterceptBody (fleets model L.!! fid) b : deleteN fid (fleets model) }
 moveFunc model _            = model { prompt = Nothing }
 
 funcList =
