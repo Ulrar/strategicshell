@@ -18,10 +18,10 @@ import           Prompt
 import           Movements
 import           Generation
 
-initial size offset zoom = (Model (genUniverse) [] 0 size offset zoom Nothing, Cmd.none)
+initial viewS = (Model (genUniverse) [] viewS Nothing, Cmd.none)
 
 update :: Model -> Action -> (Model, Cmd SDLEngine Action)
-update model (WindowResized size) = (model { screenSize = size }, Cmd.none)
+update model (WindowResized size) = (model { viewSet = changeScreenSize size $ viewSet model }, Cmd.none)
 update model (Tick t)             = (model { systems = L.map (\s -> SolarSystem (makeOrbit (V2 0 0) $ sun s)) $ systems model, fleets = L.map makeFleetMove $ fleets model }, Cmd.none)
 -- Prompt
 update model (KeyPressed KB.ReturnKey) = (togglePrompt model, Cmd.none)
@@ -34,9 +34,10 @@ main :: IO ()
 main = do
   engine <- SDL.startup
   size <- windowSize engine
+  let viewS = ViewSettings 0 size (V2 0 0) 1
 
   run engine defaultConfig GameLifecycle
-    { initialFn       = initial size (V2 0 0) 1
+    { initialFn       = initial viewS
     , updateFn        = update
     , subscriptionsFn = subscriptions
     , viewFn          = view

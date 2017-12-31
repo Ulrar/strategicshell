@@ -1,4 +1,9 @@
-module View (view, changeOffset) where
+module View
+       ( view
+       , changeOffset
+       , changeScreenSize
+       , changeZoom
+       ) where
 
 import           Helm
 import           Linear.V2        (V2(V2))
@@ -10,20 +15,39 @@ import qualified Data.List        as L
 
 import           Types
 
-changeOffset ix iy (V2 x y) = V2 (x + ix) (y + iy)
+--
+-- Update ViewSettings
+--
+changeOffset ix iy viewS =
+  let (V2 x y) = viewOffset viewS in
+  viewS { viewOffset = V2 (x + ix) (y + iy) }
 
-inGameToScreenCoord :: V2 Double -> V2 Double -> V2 Int -> Double -> V2 Double
-inGameToScreenCoord (V2 x y) (V2 offsetx offsety) (V2 screenx screeny) zoom = V2 (zoom * (x - offsetx) + (fromIntegral screenx / 2)) (zoom * (y - offsety) + (fromIntegral screeny / 2))
+changeScreenSize s viewSet = viewSet { screenSize = s }
 
-label t p a offset ss zoom = [move (inGameToScreenCoord (p + (V2 0 (20 + a))) offset ss zoom) $ text $ HT.color (rgb 1 1 1) $ HT.toText $ t]
+changeZoom iz viewS =
+  let z = viewZoom viewS in
+  viewS { viewZoom = z + iz }
 
-renderBody zoom offset ss b = toForm $ collage $ (label (bname b) (bpos b) (size b) offset ss zoom) ++ [move (inGameToScreenCoord (bpos b) offset ss zoom) $ filled (color b) $ circle ((size b) * zoom)]
+--
+-- Render Model
+--
 
-renderBodies zoom offset ss b = toForm $ collage $ (L.map (renderBody zoom offset ss) b) ++ (L.map ((renderBodies zoom offset ss) . cbodies) b)
+inGameToScreenCoord :: V2 Double -> ViewSettings -> V2 Double
+inGameToScreenCoord (V2 x y) viewS =
+  let (V2 offsetx offsety) = viewOffset viewS in
+  let (V2 screenx screeny) = screenSize viewS in
+  let zoom = viewZoom viewS in
+  V2 (zoom * (x - offsetx) + (fromIntegral screenx / 2)) (zoom * (y - offsety) + (fromIntegral screeny / 2))
 
-renderFleet zoom offset ss f = toForm $ collage $ (label (fname f) (fpos f) 0 offset ss zoom) ++ [(move (inGameToScreenCoord (fpos f) offset ss zoom) $ filled (rgb 1 0 0) $ square (5 * zoom))]
+label t p a viewS = [move (inGameToScreenCoord (p + (V2 0 (20 + a))) viewS) $ text $ HT.color (rgb 1 1 1) $ HT.toText $ t]
 
-renderFleets zoom offset ss f = toForm $ collage $ L.map (renderFleet zoom offset ss) f
+renderBody viewS b = toForm $ collage $ (label (bname b) (bpos b) (size b) viewS) ++ [move (inGameToScreenCoord (bpos b) viewS) $ filled (color b) $ circle ((size b) * (viewZoom viewS))]
+
+renderBodies viewS b = toForm $ collage $ (L.map (renderBody viewS) b) ++ (L.map ((renderBodies viewS) . cbodies) b)
+
+renderFleet viewS f = toForm $ collage $ (label (fname f) (fpos f) 0 viewS) ++ [(move (inGameToScreenCoord (fpos f) viewS) $ filled (rgb 1 0 0) $ square (5 * (viewZoom viewS)))]
+
+renderFleets viewS f = toForm $ collage $ L.map (renderFleet viewS) f
 
 renderPrompt (V2 sx sy) p =
   case p of
@@ -32,16 +56,14 @@ renderPrompt (V2 sx sy) p =
 
 view :: Model -> Graphics SDLEngine
 view model =
-  let zoom = viewZoom model in
-  let offset = viewOffset model in
-  let dsi = dispSysId model in
-  let ss = screenSize model in
+  let viewS = viewSet model in
+  let dsi = dispSysId viewS in
   let ls = systems model in
   Graphics2D $ collage $
     if (L.length ls) - 1 < dsi
       then
         []
       else
-        [renderBodies zoom offset ss [sun $ ls L.!! dsi]] ++
-        [renderFleets zoom offset ss $ (L.filter (\f -> fSysId f == dsi) $ fleets model)] ++
-        (renderPrompt ss $ prompt model)
+        [renderBodies viewS [sun $ ls L.!! dsi]] ++
+        [renderFleets viewS $ (L.filter (\f -> fSysId f == dsi) $ fleets model)] ++
+        (renderPrompt (screenSize viewS) $ prompt model)

@@ -5,6 +5,7 @@ module Types
          Ship(..),
          Fleet(..),
          SolarSystem(..),
+         ViewSettings(..),
          Model(..),
        ) where
 
@@ -46,14 +47,19 @@ data SolarSystem = SolarSystem
     sun             :: Body
   }
 
+data ViewSettings = ViewSettings
+  {
+    dispSysId   :: Int,
+    screenSize  :: V2 Int,
+    viewOffset  :: V2 Double,
+    viewZoom    :: Double
+  }
+
 data Model = Model
   {
     systems     :: [SolarSystem],
     fleets      :: [Fleet],
-    dispSysId   :: Int,
-    screenSize  :: V2 Int,
-    viewOffset  :: V2 Double,
-    viewZoom    :: Double,
+    viewSet     :: ViewSettings,
     prompt      :: Maybe String
   }
 

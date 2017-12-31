@@ -42,13 +42,13 @@ processPrompt model key =
       key'            -> model { prompt = Just $ s ++ hKeyToChar key' }
     Nothing -> case key of
       -- Zooming
-      KB.KeypadPlusKey  -> model { viewZoom = (viewZoom model) + 0.1 }
-      KB.KeypadMinusKey -> model { viewZoom = (viewZoom model) - 0.1 }
+      KB.KeypadPlusKey  -> model { viewSet = changeZoom   0.1  $ viewSet model }
+      KB.KeypadMinusKey -> model { viewSet = changeZoom (-0.1) $ viewSet model }
       -- Panning
-      KB.LeftKey        -> model { viewOffset = changeOffset (-50) 0  $ viewOffset model }
-      KB.RightKey       -> model { viewOffset = changeOffset 50    0  $ viewOffset model }
-      KB.DownKey        -> model { viewOffset = changeOffset 0    50  $ viewOffset model }
-      KB.UpKey          -> model { viewOffset = changeOffset 0  (-50) $ viewOffset model }
+      KB.LeftKey        -> model { viewSet = changeOffset (-50) 0  $ viewSet model }
+      KB.RightKey       -> model { viewSet = changeOffset 50    0  $ viewSet model }
+      KB.DownKey        -> model { viewSet = changeOffset 0    50  $ viewSet model }
+      KB.UpKey          -> model { viewSet = changeOffset 0  (-50) $ viewSet model }
       -- Test
       KB.NKey           -> model { fleets = spawnFleet $ fleets model }
       KB.PKey           -> model { fleets = moveFleet (fleets model) $ systems model }
