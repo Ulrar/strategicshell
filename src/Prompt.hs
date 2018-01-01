@@ -10,21 +10,31 @@ import           View
 import           Movements
 
 parseBodyName bname =
-  case [ (m, n)
+  case [ (m, n, s3)
        | (m, s1) <- (reads :: ReadS Int) bname
        , ("-", s2) <- lex s1
-       , (n, "") <- (reads :: ReadS Int) s2
+       , (n, s3) <- (reads :: ReadS Int) s2
        ] of
     []           -> Nothing
-    [(sid, bid)] -> Just (sid, bid)
+    [(sid, bid, s3)] -> case [ m
+                             | ("-", s4) <- lex s3
+                             , (m, "") <- (reads :: ReadS Int) s4
+                             ] of
+      []    -> if s3 == "" then Just $ Right (sid, bid) else Nothing
+      [mid] -> Just $ Left (sid, bid, mid)
 
 getBody :: String -> [SolarSystem] -> Maybe Body
 getBody bname ls =
   case parseBodyName bname of
-    Nothing         -> Nothing
-    Just (sid, bid) -> case ls ^? element (sid - 1) of
+    Nothing                     -> Nothing
+    Just (Right (sid, bid))     -> case ls ^? element (sid - 1) of
       Nothing -> Nothing
       Just s  -> cbodies (sun s) ^? element (bid - 1)
+    Just (Left (sid, bid, mid)) -> case ls ^? element (sid - 1) of
+      Nothing -> Nothing
+      Just s  -> case cbodies (sun s) ^? element (bid - 1) of
+        Nothing -> Nothing
+        Just b  -> cbodies b ^? element (mid - 1)
 
 moveFunc model [fle, bod] =
   let fl = fleets model in
