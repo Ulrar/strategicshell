@@ -9,6 +9,7 @@ import           Types
 import           View
 import           Movements
 
+parseBodyName :: String -> Maybe (Either (Int, Int, Int) (Int, Int))
 parseBodyName bname =
   case [ (m, n, s3)
        | (m, s1) <- (reads :: ReadS Int) bname
@@ -23,19 +24,22 @@ parseBodyName bname =
       []    -> if s3 == "" then Just $ Right (sid, bid) else Nothing
       [mid] -> Just $ Left (sid, bid, mid)
 
+getPlanet :: Int -> Int -> [SolarSystem] -> Maybe Body
+getPlanet sid bid ls =
+  case ls ^? element sid of
+    Nothing -> Nothing
+    Just s  -> cbodies (sun s) ^? element bid
+
 getBody :: String -> [SolarSystem] -> Maybe Body
 getBody bname ls =
   case parseBodyName bname of
     Nothing                     -> Nothing
-    Just (Right (sid, bid))     -> case ls ^? element (sid - 1) of
+    Just (Right (sid, bid))     -> getPlanet (sid - 1) (bid - 1) ls
+    Just (Left (sid, bid, mid)) -> case getPlanet (sid - 1) (bid - 1) ls of
       Nothing -> Nothing
-      Just s  -> cbodies (sun s) ^? element (bid - 1)
-    Just (Left (sid, bid, mid)) -> case ls ^? element (sid - 1) of
-      Nothing -> Nothing
-      Just s  -> case cbodies (sun s) ^? element (bid - 1) of
-        Nothing -> Nothing
-        Just b  -> cbodies b ^? element (mid - 1)
+      Just b  -> cbodies b ^? element (mid - 1)
 
+moveFunc :: Model -> [String] -> Model
 moveFunc model [fle, bod] =
   let fl = fleets model in
   case L.findIndex (\fleet -> fname fleet == fle) fl of
@@ -47,6 +51,7 @@ moveFunc model [fle, bod] =
         model { prompt = Nothing, fleets = fl & element fid .~ nf }
 moveFunc model _            = model { prompt = Nothing }
 
+funcList :: [(String, Model -> [String] -> Model)]
 funcList =
   [
     ("move", moveFunc)
