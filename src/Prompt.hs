@@ -9,24 +9,32 @@ import           Types
 import           View
 import           Movements
 
-getBody :: Int -> Int -> [SolarSystem] -> Maybe Body
-getBody sid bid ls =
-  case ls ^? element sid of
-    Nothing -> Nothing
-    Just s  -> cbodies (sun s) ^? element bid
+parseBodyName bname =
+  case [ (m, n)
+       | (m, s1) <- (reads :: ReadS Int) bname
+       , ("-", s2) <- lex s1
+       , (n, "") <- (reads :: ReadS Int) s2
+       ] of
+    []           -> Nothing
+    [(sid, bid)] -> Just (sid, bid)
+
+getBody :: String -> [SolarSystem] -> Maybe Body
+getBody bname ls =
+  case parseBodyName bname of
+    Nothing         -> Nothing
+    Just (sid, bid) -> case ls ^? element (sid - 1) of
+      Nothing -> Nothing
+      Just s  -> cbodies (sun s) ^? element (bid - 1)
 
 moveFunc model [fle, bod] =
   let fl = fleets model in
   case L.findIndex (\fleet -> fname fleet == fle) fl of
     Nothing  -> model { prompt = Nothing }
-    Just fid ->
-      case [(m, n) | let s0 = bod, (m, s1) <- (reads :: ReadS Int) s0, ("-", s2) <- lex s1, (n, "") <- (reads :: ReadS Int) s2] of
-        [] -> model { prompt = Nothing }
-        [(sid, bid)]  -> case getBody (sid - 1) (bid - 1) $ systems model of
-          Nothing -> model { prompt = Nothing }
-          Just b  ->
-            let nf = setInterceptBody (fl L.!! fid) b in
-            model { prompt = Nothing, fleets = fl & element fid .~ nf }
+    Just fid -> case getBody bod $ systems model of
+      Nothing -> model { prompt = Nothing }
+      Just b  ->
+        let nf = setInterceptBody (fl L.!! fid) b in
+        model { prompt = Nothing, fleets = fl & element fid .~ nf }
 moveFunc model _            = model { prompt = Nothing }
 
 funcList =
