@@ -54,6 +54,10 @@ renderPrompt (V2 sx sy) p =
     Nothing     -> group []
     Just prompt -> group [move (V2 (fromIntegral sx / 2) 0) $ filled (rgb 0.1 0.1 0.1) $ rect (V2 (fromIntegral sx) 40), move (V2 0 0) $ text $ HT.alignBottomLeft $ HT.color (rgb 1 1 1) $ HT.toText prompt]
 
+renderOutput l ss =
+  let (V2 _ y) = ss in
+  group $ L.zipWith (\s n -> move (V2 0 (fromIntegral y - 20 - n * 20)) $ text $ HT.alignBottomLeft $ HT.color (rgb 1 1 1) $ HT.toText s) l [0..]
+
 view :: Model -> Graphics SDLEngine
 view model =
   let viewS = viewSet model in
@@ -67,4 +71,5 @@ view model =
         [ renderBodies viewS [sun $ ls L.!! dsi]
         , renderFleets viewS (L.filter (\f -> fSysId f == dsi) (fleets model))
         , renderPrompt (screenSize viewS) (prompt model)
+        , renderOutput (cmdOutput model) (screenSize viewS)
         ]

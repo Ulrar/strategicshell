@@ -59,6 +59,7 @@ data Model = Model
     systems     :: [SolarSystem],
     fleets      :: [Fleet],
     viewSet     :: ViewSettings,
+    cmdOutput   :: [String],
     prompt      :: Maybe String
   }
 

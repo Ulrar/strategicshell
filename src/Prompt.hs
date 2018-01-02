@@ -43,7 +43,7 @@ moveFunc :: Model -> [String] -> Model
 moveFunc model [fle, bod] =
   let fl = fleets model in
   case L.findIndex (\fleet -> fname fleet == fle) fl of
-    Nothing  -> model { prompt = Nothing }
+    Nothing  -> model { prompt = Nothing, cmdOutput = "No fleet by that name" : (cmdOutput model) }
     Just fid -> case getBody bod $ systems model of
       Nothing -> model { prompt = Nothing }
       Just b  ->
