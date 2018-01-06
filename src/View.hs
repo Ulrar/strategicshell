@@ -58,7 +58,7 @@ renderFleet viewS f = group
 
 renderFleets viewS f = group $ L.map (renderFleet viewS) f
 
-renderOutput l y =
+renderHistory l y =
   L.zipWith (\s n -> move (V2 0 (y - 40 - n * 20)) $ text $ HT.alignBottomLeft $ HT.color (rgb 1 1 1) $ HT.toText s) l [0..]
 
 renderShell (V2 osx osy) (Shell p h) =
@@ -66,10 +66,10 @@ renderShell (V2 osx osy) (Shell p h) =
   case p of
     Nothing     -> group []
     Just prompt -> group $
-      [ move (V2 (sx / 2) (sy - 10)) $ filled (rgb 0.1 0.1 0.1) $ rect (V2 sx 20)
+      [ move (V2 (sx / 2) (sy - 10 - (fromIntegral $ L.length h * 10))) $ filled (rgb 0.1 0.1 0.1) $ rect (V2 sx $ (fromIntegral $ L.length h * 20) + 20)
       , move (V2 0 (sy - 20)) $ text $ HT.alignBottomLeft $ HT.color (rgb 1 1 1) $ HT.toText ("> " ++ prompt)
       ] ++
-      renderOutput h sy
+      renderHistory h sy
 
 view :: Model -> Graphics SDLEngine
 view model =
