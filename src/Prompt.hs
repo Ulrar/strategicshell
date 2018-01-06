@@ -43,9 +43,7 @@ resetPrompt model t =
   let s = shell model in
   if null t
     then
-      case prompt s of
-        Nothing -> model { shell = s { prompt = Nothing } }
-        Just cmd -> model { shell = s { prompt = Nothing, history = ("> " ++ cmd) : (history s) } }
+      model { shell = s { prompt = Nothing } }
     else
       case prompt s of
         Nothing  -> model { shell = s { prompt = Nothing, history = t : (history s) } }
