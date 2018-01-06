@@ -79,21 +79,23 @@ renderHistory y =
   ) [0..]
 
 -- Render the shell, takes the size of the screen and the shell to display
+renderShell :: V2 t -> Shell -> Form e
 renderShell (V2 osx osy) (Shell p h) =
   let (sx, sy) = (fromIntegral osx, fromIntegral osy) in
   case p of
-    Nothing     -> group []
-    Just prompt -> group $
-      [ move (V2 (sx / 2) (sy - 10 - fromIntegral (L.length h * 10))) --
-        $ filled (rgb 0.1 0.1 0.1)                                    -- Background
-        $ rect (V2 sx $ fromIntegral (L.length h * 20) + 20)          --
-      , move (V2 0 (sy - 20))
-        $ text                                                        --
-        $ HT.alignBottomLeft                                          -- Current prompt
-        $ HT.color (rgb 1 1 1)                                        -- with > in front
-        $ HT.toText ("> " ++ prompt)                                  --
-      ] ++
-      renderHistory sy h
+    Nothing  -> group []
+    Just cmd ->
+      let backgr = move (V2 (sx / 2) (sy - 10 - fromIntegral (L.length h * 10)))
+                   $ filled (rgb 0.1 0.1 0.1)
+                   $ rect (V2 sx $ fromIntegral (L.length h * 20) + 20)
+      in
+      let prompt = move (V2 0 (sy - 20))
+                   $ text
+                   $ HT.alignBottomLeft
+                   $ HT.color (rgb 1 1 1)
+                   $ HT.toText ("> " ++ cmd)
+      in
+      group $ backgr : prompt : renderHistory sy h
 
 view :: Model -> Graphics SDLEngine
 view model =
