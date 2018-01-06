@@ -81,7 +81,7 @@ renderFleet viewS f = group
 renderFleets :: ViewSettings -> [Fleet] -> Form e
 renderFleets viewS fleets = group $ L.map (renderFleet viewS) fleets
 
--- Render the history on top of the prompt, takes the y size of the screen
+-- Render the history above the prompt, takes the y size of the screen
 -- and a list of lines to display
 renderHistory :: Double -> [String] -> [Form e]
 renderHistory y =
