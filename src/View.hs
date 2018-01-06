@@ -1,29 +1,37 @@
-module View
-       ( view
-       , changeOffset
-       , changeScreenSize
-       , changeZoom
-       ) where
+module           View
+                 ( view
+                 , changeOffset
+                 , changeScreenSize
+                 , changeZoom
+                 )
+where
 
 import           Helm
-import           Linear.V2        (V2(V2))
 import           Helm.Color
 import           Helm.Graphics2D
-import           Helm.Engine.SDL  (SDLEngine)
+import           Linear.V2            (V2(V2))
+import           Helm.Engine.SDL      (SDLEngine)
 import qualified Helm.Graphics2D.Text as HT
-import qualified Data.List        as L
+import qualified Data.List            as L
 
 import           Types
 
 --
 -- Update ViewSettings
 --
+
+-- Update the offset by adding the arguments to the current values
 changeOffset ix iy viewS =
   let (V2 x y) = viewOffset viewS in
   viewS { viewOffset = V2 (x + ix) (y + iy) }
 
+-- Update the screen size
+changeScreenSize :: V2 Int -> ViewSettings -> ViewSettings
 changeScreenSize s viewSet = viewSet { screenSize = s }
 
+-- Update the given viewSettings by adding the
+-- the first argument to the current zoom
+changeZoom :: Double -> ViewSettings -> ViewSettings
 changeZoom iz viewS =
   let z = viewZoom viewS in
   viewS { viewZoom = z + iz }
@@ -36,14 +44,19 @@ inGameToScreenCoord :: V2 Double -> ViewSettings -> V2 Double
 inGameToScreenCoord (V2 x y) viewS =
   let (V2 offsetx offsety) = viewOffset viewS in
   let (V2 screenx screeny) = screenSize viewS in
+  let (sx, sy) = (fromIntegral screenx, fromIntegral screeny) in
   let zoom = viewZoom viewS in
-  V2 (zoom * (x - offsetx) + (fromIntegral screenx / 2)) (zoom * (y - offsety) + (fromIntegral screeny / 2))
+  V2 (zoom * (x - offsetx) + (sx / 2)) (zoom * (y - offsety) + (sy / 2))
 
+-- Render text under the given object's coordinates and size
+-- Takes the text, the object and the view settings
+label :: String -> V2 Double -> Double -> ViewSettings -> Form e
 label t p a viewS = move (inGameToScreenCoord (p + V2 0 (20 + a)) viewS)
                     $ text
                     $ HT.color (rgb 1 1 1)
                     $ HT.toText t
 
+renderBody :: ViewSettings -> Body -> Form e
 renderBody viewS b = group
   [ label (bname b) (bpos b) (size b) viewS
   , move (inGameToScreenCoord (bpos b) viewS)
@@ -51,11 +64,13 @@ renderBody viewS b = group
     $ circle (size b * viewZoom viewS)
   ]
 
-renderBodies viewS b = group
-  [ group $ L.map (renderBody viewS) b
-  , group $ L.map (renderBodies viewS . cbodies) b
+renderBodies :: ViewSettings -> [Body] -> Form e
+renderBodies viewS bodies = group
+  [ group $ L.map (renderBody viewS) bodies
+  , group $ L.map (renderBodies viewS . cbodies) bodies
   ]
 
+renderFleet :: ViewSettings -> Fleet -> Form e
 renderFleet viewS f = group
   [ label (fname f) (fpos f) 0 viewS
   , move (inGameToScreenCoord (fpos f) viewS)
@@ -63,7 +78,8 @@ renderFleet viewS f = group
     $ square (5 * viewZoom viewS)
   ]
 
-renderFleets viewS f = group $ L.map (renderFleet viewS) f
+renderFleets :: ViewSettings -> [Fleet] -> Form e
+renderFleets viewS fleets = group $ L.map (renderFleet viewS) fleets
 
 -- Render the history on top of the prompt, takes the y size of the screen
 -- and a list of lines to display
@@ -79,15 +95,16 @@ renderHistory y =
   ) [0..]
 
 -- Render the shell, takes the size of the screen and the shell to display
-renderShell :: V2 t -> Shell -> Form e
+renderShell :: V2 Int -> Shell -> Form e
 renderShell (V2 osx osy) (Shell p h) =
   let (sx, sy) = (fromIntegral osx, fromIntegral osy) in
   case p of
     Nothing  -> group []
     Just cmd ->
-      let backgr = move (V2 (sx / 2) (sy - 10 - fromIntegral (L.length h * 10)))
+      let len = fromIntegral $ L.length h + 1 in
+      let backgr = move (V2 (sx / 2) (sy - len * 10))
                    $ filled (rgb 0.1 0.1 0.1)
-                   $ rect (V2 sx $ fromIntegral (L.length h * 20) + 20)
+                   $ rect (V2 sx $ len * 20)
       in
       let prompt = move (V2 0 (sy - 20))
                    $ text
