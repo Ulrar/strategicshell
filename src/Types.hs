@@ -5,6 +5,7 @@ module Types
        , Fleet(..)
        , SolarSystem(..)
        , ViewSettings(..)
+       , Shell(..)
        , Model(..)
        ) where
 
@@ -54,13 +55,18 @@ data ViewSettings = ViewSettings
     viewZoom    :: Double
   }
 
+data Shell = Shell
+  {
+    prompt      :: Maybe String,
+    history     :: [String]
+  }
+
 data Model = Model
   {
     systems     :: [SolarSystem],
     fleets      :: [Fleet],
     viewSet     :: ViewSettings,
-    cmdOutput   :: [String],
-    prompt      :: Maybe String
+    shell       :: Shell
   }
 
 

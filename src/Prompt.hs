@@ -39,17 +39,32 @@ getBody bname ls =
       Nothing -> Nothing
       Just b  -> cbodies b ^? element (mid - 1)
 
+resetPrompt model t =
+  let s = shell model in
+  if null t
+    then
+      case prompt s of
+        Nothing -> model { shell = s { prompt = Nothing } }
+        Just cmd -> model { shell = s { prompt = Nothing, history = ("> " ++ cmd) : (history s) } }
+    else
+      case prompt s of
+        Nothing  -> model { shell = s { prompt = Nothing, history = t : (history s) } }
+        Just cmd -> model { shell = s { prompt = Nothing, history = t : ("> " ++ cmd) : (history s) } }
+
 moveFunc :: Model -> [String] -> Model
 moveFunc model [fle, bod] =
   let fl = fleets model in
+  let s = shell model in
   case L.findIndex (\fleet -> fname fleet == fle) fl of
-    Nothing  -> model { prompt = Nothing, cmdOutput = "No fleet by that name" : (cmdOutput model) }
+    Nothing  -> resetPrompt model $ "No fleet by that name : " ++ fle
     Just fid -> case getBody bod $ systems model of
-      Nothing -> model { prompt = Nothing }
+      Nothing -> resetPrompt model $ "No body by that name : " ++ bod
       Just b  ->
         let nf = setInterceptBody (fl L.!! fid) b in
-        model { prompt = Nothing, fleets = fl & element fid .~ nf }
-moveFunc model _            = model { prompt = Nothing }
+        resetPrompt (model {fleets = fl & element fid .~ nf }) $ "Moving " ++ fle ++ " to " ++ bod
+moveFunc model _            = 
+  let s = shell model in
+  resetPrompt model "usage : move <fleet name> <body name>"
 
 funcList :: [(String, Model -> [String] -> Model)]
 funcList =
@@ -60,21 +75,28 @@ funcList =
 execCommand :: Model -> String -> Model
 execCommand model cmd =
   let l = words cmd in
-  case L.find (\(c, f) -> c == head l) funcList of
-    Nothing     -> model { prompt = Nothing }
-    Just (_, f) -> f model $ tail l
+  let s = shell model in
+  if null l
+    then
+      resetPrompt model ""
+    else
+      case L.find (\(c, f) -> c == head l) funcList of
+        Nothing     -> resetPrompt model $ "Unknown command : " ++ head l
+        Just (_, f) -> f model $ tail l
 
 togglePrompt :: Model -> Model
 togglePrompt model =
-  case prompt model of
-    Nothing -> model { prompt = Just "" }
+  let s = shell model in
+  case prompt s of
+    Nothing -> model { shell = s { prompt = Just "" } }
     Just s  -> execCommand model s
 
 processPrompt model key =
-  case prompt model of
-    Just s  -> case key of
-      KB.BackspaceKey   -> if null s then model else model { prompt = Just $ init s }
-      key'              -> model { prompt = Just $ s ++ hKeyToChar key' }
+  let s = shell model in
+  case prompt s of
+    Just cmd -> case key of
+      KB.BackspaceKey   -> if null cmd then model else model { shell = s { prompt = Just $ init cmd } }
+      key'              -> model { shell = s { prompt = Just $ cmd ++ hKeyToChar key'} }
     Nothing             -> case key of
       -- Zooming
       KB.KeypadPlusKey  -> model { viewSet = changeZoom   0.1  $ viewSet model }

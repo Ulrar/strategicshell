@@ -41,22 +41,35 @@ inGameToScreenCoord (V2 x y) viewS =
 
 label t p a viewS = move (inGameToScreenCoord (p + V2 0 (20 + a)) viewS) $ text $ HT.color (rgb 1 1 1) $ HT.toText t
 
-renderBody viewS b = group [label (bname b) (bpos b) (size b) viewS, move (inGameToScreenCoord (bpos b) viewS) $ filled (color b) $ circle (size b * viewZoom viewS)]
+renderBody viewS b = group
+  [ label (bname b) (bpos b) (size b) viewS
+  , move (inGameToScreenCoord (bpos b) viewS) $ filled (color b) $ circle (size b * viewZoom viewS)
+  ]
 
-renderBodies viewS b = group [group $ L.map (renderBody viewS) b, group $ L.map (renderBodies viewS . cbodies) b]
+renderBodies viewS b = group
+  [ group $ L.map (renderBody viewS) b
+  , group $ L.map (renderBodies viewS . cbodies) b
+  ]
 
-renderFleet viewS f = group [label (fname f) (fpos f) 0 viewS, move (inGameToScreenCoord (fpos f) viewS) $ filled (rgb 1 0 0) $ square (5 * viewZoom viewS)]
+renderFleet viewS f = group
+  [ label (fname f) (fpos f) 0 viewS
+  , move (inGameToScreenCoord (fpos f) viewS) $ filled (rgb 1 0 0) $ square (5 * viewZoom viewS)
+  ]
 
 renderFleets viewS f = group $ L.map (renderFleet viewS) f
 
-renderPrompt (V2 sx sy) p =
+renderOutput l y =
+  L.zipWith (\s n -> move (V2 0 (y - 40 - n * 20)) $ text $ HT.alignBottomLeft $ HT.color (rgb 1 1 1) $ HT.toText s) l [0..]
+
+renderShell (V2 osx osy) (Shell p h) =
+  let (sx, sy) = (fromIntegral osx, fromIntegral osy) in
   case p of
     Nothing     -> group []
-    Just prompt -> group [move (V2 (fromIntegral sx / 2) 0) $ filled (rgb 0.1 0.1 0.1) $ rect (V2 (fromIntegral sx) 40), move (V2 0 0) $ text $ HT.alignBottomLeft $ HT.color (rgb 1 1 1) $ HT.toText prompt]
-
-renderOutput l ss =
-  let (V2 _ y) = ss in
-  group $ L.zipWith (\s n -> move (V2 0 (fromIntegral y - 20 - n * 20)) $ text $ HT.alignBottomLeft $ HT.color (rgb 1 1 1) $ HT.toText s) l [0..]
+    Just prompt -> group $
+      [ move (V2 (sx / 2) (sy - 10)) $ filled (rgb 0.1 0.1 0.1) $ rect (V2 sx 20)
+      , move (V2 0 (sy - 20)) $ text $ HT.alignBottomLeft $ HT.color (rgb 1 1 1) $ HT.toText ("> " ++ prompt)
+      ] ++
+      renderOutput h sy
 
 view :: Model -> Graphics SDLEngine
 view model =
@@ -70,6 +83,5 @@ view model =
       else
         [ renderBodies viewS [sun $ ls L.!! dsi]
         , renderFleets viewS (L.filter (\f -> fSysId f == dsi) (fleets model))
-        , renderPrompt (screenSize viewS) (prompt model)
-        , renderOutput (cmdOutput model) (screenSize viewS)
+        , renderShell (screenSize viewS) (shell model)
         ]
