@@ -27,4 +27,5 @@ executable strategicshell
                        helm,
                        lens,
                        linear,
-                       AC-Angle
+                       AC-Angle,
+                       unordered-containers

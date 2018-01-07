@@ -1,9 +1,14 @@
-module Prompt (processPrompt, togglePrompt) where
+module           Prompt
+                 ( processPrompt
+                 , togglePrompt
+                 )
+where
 
 import           Control.Lens
-import           Linear.V2       (V2(V2))
-import qualified Helm.Keyboard   as KB
-import qualified Data.List       as L
+import           Linear.V2           (V2(V2))
+import qualified Helm.Keyboard       as KB
+import qualified Data.List           as L
+import qualified Data.HashMap.Strict as Map
 
 import           Types
 import           View
@@ -51,15 +56,15 @@ resetPrompt model t =
 
 moveFunc :: Model -> [String] -> Model
 moveFunc model [fle, bod] =
-  let fl = fleets model in
+  let fm = fleets model in
   let s = shell model in
-  case L.findIndex (\fleet -> fname fleet == fle) fl of
-    Nothing  -> resetPrompt model $ "No fleet by that name : " ++ fle
-    Just fid -> case getBody bod $ systems model of
+  case Map.lookup fle fm of
+    Nothing    -> resetPrompt model $ "No fleet by that name : " ++ fle
+    Just fleet -> case getBody bod $ systems model of
       Nothing -> resetPrompt model $ "No body by that name : " ++ bod
       Just b  ->
-        let nf = setInterceptBody (fl L.!! fid) b in
-        resetPrompt (model {fleets = fl & element fid .~ nf }) $ "Moving " ++ fle ++ " to " ++ bod
+        let nf = setInterceptBody fleet b in
+        resetPrompt (model {fleets = Map.insert fle nf fm }) $ "Moving " ++ fle ++ " to " ++ bod
 moveFunc model _            = 
   let s = shell model in
   resetPrompt model "usage : move <fleet name> <body name>"
@@ -110,7 +115,7 @@ processPrompt model key =
   where
 
 -- Test
-spawnFleet l = Fleet { fpos = V2 150 150, fSysId = 0, speed = 10, fdest = Nothing, fname = "f1", ships = [Ship { hp = 100 }] } : l
+spawnFleet = Map.insert "f1" Fleet { fpos = V2 150 150, fSysId = 0, speed = 10, fdest = Nothing, fname = "f1", ships = [Ship { hp = 100 }] }
 
 hKeyToChar k = case k of
   KB.AKey       -> "a"

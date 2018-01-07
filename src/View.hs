@@ -13,6 +13,7 @@ import           Linear.V2            (V2(V2))
 import           Helm.Engine.SDL      (SDLEngine)
 import qualified Helm.Graphics2D.Text as HT
 import qualified Data.List            as L
+import qualified Data.HashMap.Strict  as Map
 
 import           Types
 
@@ -78,8 +79,8 @@ renderFleet viewS f = group
     $ square (5 * viewZoom viewS)
   ]
 
-renderFleets :: ViewSettings -> [Fleet] -> Form e
-renderFleets viewS fleets = group $ L.map (renderFleet viewS) fleets
+renderFleets :: ViewSettings -> Map.HashMap String Fleet -> Form e
+renderFleets viewS fleets = group $ L.map (renderFleet viewS . snd) $ Map.toList fleets
 
 -- Render the history above the prompt, takes the y size of the screen
 -- and a list of lines to display
@@ -125,6 +126,6 @@ view model =
         []
       else
         [ renderBodies viewS [sun $ ls L.!! dsi]
-        , renderFleets viewS (L.filter (\f -> fSysId f == dsi) (fleets model))
+        , renderFleets viewS (Map.filter (\f -> fSysId f == dsi) (fleets model))
         , renderShell (screenSize viewS) (shell model)
         ]

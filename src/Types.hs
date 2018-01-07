@@ -1,18 +1,20 @@
-module Types
-       ( Action(..)
-       , Body(..)
-       , Ship(..)
-       , Fleet(..)
-       , SolarSystem(..)
-       , ViewSettings(..)
-       , Shell(..)
-       , Model(..)
-       ) where
+module           Types
+                 ( Action(..)
+                 , Body(..)
+                 , Ship(..)
+                 , Fleet(..)
+                 , SolarSystem(..)
+                 , ViewSettings(..)
+                 , Shell(..)
+                 , Model(..)
+                 )
+where
 
 import           Helm.Color
-import qualified Helm.Keyboard as KB
+import qualified Helm.Keyboard        as KB
 
-import           Linear.V2     (V2(V2))
+import           Linear.V2            (V2(V2))
+import           Data.HashMap.Strict
 
 data Action = Tick Double | WindowResized (V2 Int) | KeyPressed KB.Key
 
@@ -64,7 +66,7 @@ data Shell = Shell
 data Model = Model
   {
     systems     :: [SolarSystem],
-    fleets      :: [Fleet],
+    fleets      :: HashMap String Fleet,
     viewSet     :: ViewSettings,
     shell       :: Shell
   }
