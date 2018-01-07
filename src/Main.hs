@@ -27,7 +27,7 @@ update model (WindowResized size) = (model { viewSet = changeScreenSize size $ v
 update model (Tick t)             = (model { systems = L.map (\s -> SolarSystem (makeOrbit (V2 0 0) $ sun s)) $ systems model, fleets = Map.map makeFleetMove $ fleets model }, Cmd.none)
 -- Prompt
 update model (KeyPressed KB.ReturnKey) = (togglePrompt model, Cmd.none)
-update model (KeyPressed k)            = (processPrompt model k, Cmd.none)
+update model (KeyPressed k)            = (processKey model k, Cmd.none)
 -- Shift Key
 update model (KeyUp KB.RightShiftKey)   = (model { shiftKey = False }, Cmd.none)
 update model (KeyDown KB.RightShiftKey) = (model { shiftKey = True }, Cmd.none)

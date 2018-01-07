@@ -1,5 +1,5 @@
 module           Prompt
-                 ( processPrompt
+                 ( processKey
                  , togglePrompt
                  )
 where
@@ -39,13 +39,19 @@ lookupBody (n:t) sl = case sl ^? element n of
 
 resetPrompt model t =
   let s = shell model in
+  let h = history s in
   if null t
     then
       model { shell = s { prompt = Nothing } }
     else
-      case prompt s of
-        Nothing  -> model { shell = s { prompt = Nothing, history = t : history s } }
-        Just cmd -> model { shell = s { prompt = Nothing, history = t : ("> " ++ cmd) : history s } }
+      model
+        {
+          shell = s { prompt  = Nothing
+                    , history = case prompt s of
+                                  Nothing  -> t : h
+                                  Just cmd -> t : ("> " ++ cmd) : h
+                    }
+        }
 
 moveFunc :: Model -> [String] -> Model
 moveFunc model [fle, bod] =
@@ -54,12 +60,14 @@ moveFunc model [fle, bod] =
   case Map.lookup fle fm of
     Nothing    -> resetPrompt model $ "No fleet by that name : " ++ fle
     Just fleet -> case Map.lookup bod $ bodyNames model of
-      Nothing  -> resetPrompt model $ "No body by that name : " ++ bod
-      Just bid -> case lookupBody bid $ systems model of
-        Nothing -> resetPrompt model $ "Something went wrong looking up body : " ++ bod
+      Nothing      -> resetPrompt model $ "No body by that name : " ++ bod
+      Just bodyIds -> case lookupBody bodyIds $ systems model of
+        Nothing -> resetPrompt model
+                   $ "Something went wrong looking up body : " ++ bod
         Just b  ->
           let nf = setInterceptBody fleet b in
-          resetPrompt (model {fleets = Map.insert fle nf fm }) $ "Moving " ++ fle ++ " to " ++ bod
+          resetPrompt (model {fleets = Map.insert fle nf fm })
+          $ "Moving " ++ fle ++ " to " ++ bod
 moveFunc model _            = 
   let s = shell model in
   resetPrompt model "usage : move <fleet name> <body name>"
@@ -89,28 +97,50 @@ togglePrompt model =
     Nothing -> model { shell = s { prompt = Just "" } }
     Just s  -> execCommand model s
 
-processPrompt model key =
+processPrompt model cmd key =
   let s = shell model in
+  case key of
+    KB.BackspaceKey -> if null cmd
+      then model
+      else model { shell = s { prompt = Just $ init cmd } }
+    key'            ->
+      model
+        {
+          shell = s
+            {
+              prompt = Just $ cmd ++ hKeyToChar (shiftKey model) key'
+            }
+        }
+
+processKey model key =
+  let s = shell model in
+  let viewS = viewSet model in
   case prompt s of
-    Just cmd -> case key of
-      KB.BackspaceKey   -> if null cmd then model else model { shell = s { prompt = Just $ init cmd } }
-      key'              -> model { shell = s { prompt = Just $ cmd ++ hKeyToChar (shiftKey model) key'} }
-    Nothing             -> case key of
+    Just cmd -> processPrompt model cmd key
+    Nothing  -> case key of
       -- Zooming
-      KB.KeypadPlusKey  -> model { viewSet = changeZoom   0.1  $ viewSet model }
-      KB.KeypadMinusKey -> model { viewSet = changeZoom (-0.1) $ viewSet model }
+      KB.KeypadPlusKey  -> model { viewSet = changeZoom   0.1  viewS }
+      KB.KeypadMinusKey -> model { viewSet = changeZoom (-0.1) viewS }
       -- Panning
-      KB.LeftKey        -> model { viewSet = changeOffset (-50) 0  $ viewSet model }
-      KB.RightKey       -> model { viewSet = changeOffset 50    0  $ viewSet model }
-      KB.DownKey        -> model { viewSet = changeOffset 0    50  $ viewSet model }
-      KB.UpKey          -> model { viewSet = changeOffset 0  (-50) $ viewSet model }
+      KB.LeftKey        -> model { viewSet = changeOffset (-50) 0  viewS }
+      KB.RightKey       -> model { viewSet = changeOffset 50    0  viewS }
+      KB.DownKey        -> model { viewSet = changeOffset 0    50  viewS }
+      KB.UpKey          -> model { viewSet = changeOffset 0  (-50) viewS }
       -- Test
       KB.NKey           -> model { fleets = spawnFleet $ fleets model }
       _                 -> model
   where
 
 -- Test
-spawnFleet = Map.insert "f1" Fleet { fpos = V2 150 150, fSysId = 0, speed = 10, fdest = Nothing, fname = "f1", ships = [Ship { hp = 100 }] }
+spawnFleet = Map.insert "f1"
+  Fleet
+    { fpos = V2 150 150
+    , fSysId = 0
+    , speed = 10
+    , fdest = Nothing
+    , fname = "f1"
+    , ships = [Ship { hp = 100 }]
+    }
 
 keyCodeToChar k = case k of
   KB.AKey       -> "a"
