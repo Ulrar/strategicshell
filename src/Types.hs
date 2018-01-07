@@ -66,6 +66,7 @@ data Shell = Shell
 data Model = Model
   {
     systems     :: [SolarSystem],
+    bodyNames   :: HashMap String [Int],
     fleets      :: HashMap String Fleet,
     viewSet     :: ViewSettings,
     shell       :: Shell

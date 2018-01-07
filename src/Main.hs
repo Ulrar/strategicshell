@@ -18,7 +18,9 @@ import           Prompt
 import           Movements
 import           Generation
 
-initial viewS = (Model genUniverse Map.empty viewS (Shell Nothing []), Cmd.none)
+initial viewS =
+  let (uni, nMap) = genUniverse Map.empty in
+  (Model uni nMap Map.empty viewS (Shell Nothing []), Cmd.none)
 
 update :: Model -> Action -> (Model, Cmd SDLEngine Action)
 update model (WindowResized size) = (model { viewSet = changeScreenSize size $ viewSet model }, Cmd.none)

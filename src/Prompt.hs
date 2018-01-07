@@ -14,35 +14,27 @@ import           Types
 import           View
 import           Movements
 
-parseBodyName :: String -> Maybe (Either (Int, Int, Int) (Int, Int))
-parseBodyName bname =
-  case [ (m, n, s3)
-       | (m, s1) <- (reads :: ReadS Int) bname
-       , ("-", s2) <- lex s1
-       , (n, s3) <- (reads :: ReadS Int) s2
-       ] of
-    []           -> Nothing
-    [(sid, bid, s3)] -> case [ m
-                             | ("-", s4) <- lex s3
-                             , (m, "") <- (reads :: ReadS Int) s4
-                             ] of
-      []    -> if s3 == "" then Just $ Right (sid, bid) else Nothing
-      [mid] -> Just $ Left (sid, bid, mid)
-
 getPlanet :: Int -> Int -> [SolarSystem] -> Maybe Body
 getPlanet sid bid ls =
   case ls ^? element sid of
     Nothing -> Nothing
     Just s  -> cbodies (sun s) ^? element bid
 
-getBody :: String -> [SolarSystem] -> Maybe Body
-getBody bname ls =
-  case parseBodyName bname of
-    Nothing                     -> Nothing
-    Just (Right (sid, bid))     -> getPlanet (sid - 1) (bid - 1) ls
-    Just (Left (sid, bid, mid)) -> case getPlanet (sid - 1) (bid - 1) ls of
-      Nothing -> Nothing
-      Just b  -> cbodies b ^? element (mid - 1)
+getBody :: [Int] -> [Body] -> Maybe Body
+getBody [] _     = Nothing
+getBody [n] bl   = bl ^? element n
+getBody (n:t) bl = case bl ^? element n of
+  Nothing -> Nothing
+  Just b  -> getBody t $ cbodies b
+
+lookupBody :: [Int] -> [SolarSystem] -> Maybe Body
+lookupBody [] _     = Nothing
+lookupBody [n] sl   = case sl ^? element n of
+  Nothing -> Nothing
+  Just s  -> Just $ sun s
+lookupBody (n:t) sl = case sl ^? element n of
+  Nothing -> Nothing
+  Just s  -> getBody t (cbodies $ sun s)
 
 resetPrompt model t =
   let s = shell model in
@@ -51,8 +43,8 @@ resetPrompt model t =
       model { shell = s { prompt = Nothing } }
     else
       case prompt s of
-        Nothing  -> model { shell = s { prompt = Nothing, history = t : (history s) } }
-        Just cmd -> model { shell = s { prompt = Nothing, history = t : ("> " ++ cmd) : (history s) } }
+        Nothing  -> model { shell = s { prompt = Nothing, history = t : history s } }
+        Just cmd -> model { shell = s { prompt = Nothing, history = t : ("> " ++ cmd) : history s } }
 
 moveFunc :: Model -> [String] -> Model
 moveFunc model [fle, bod] =
@@ -60,11 +52,13 @@ moveFunc model [fle, bod] =
   let s = shell model in
   case Map.lookup fle fm of
     Nothing    -> resetPrompt model $ "No fleet by that name : " ++ fle
-    Just fleet -> case getBody bod $ systems model of
-      Nothing -> resetPrompt model $ "No body by that name : " ++ bod
-      Just b  ->
-        let nf = setInterceptBody fleet b in
-        resetPrompt (model {fleets = Map.insert fle nf fm }) $ "Moving " ++ fle ++ " to " ++ bod
+    Just fleet -> case Map.lookup bod $ bodyNames model of
+      Nothing  -> resetPrompt model $ "No body by that name : " ++ bod
+      Just bid -> case lookupBody bid $ systems model of
+        Nothing -> resetPrompt model $ "Something went wrong looking up body : " ++ bod
+        Just b  ->
+          let nf = setInterceptBody fleet b in
+          resetPrompt (model {fleets = Map.insert fle nf fm }) $ "Moving " ++ fle ++ " to " ++ bod
 moveFunc model _            = 
   let s = shell model in
   resetPrompt model "usage : move <fleet name> <body name>"
