@@ -16,7 +16,7 @@ import qualified Helm.Keyboard        as KB
 import           Linear.V2            (V2(V2))
 import           Data.HashMap.Strict
 
-data Action = Tick Double | WindowResized (V2 Int) | KeyPressed KB.Key
+data Action = Tick Double | WindowResized (V2 Int) | KeyPressed KB.Key | KeyUp KB.Key | KeyDown KB.Key
 
 data Body = Body
   {
@@ -69,6 +69,7 @@ data Model = Model
     bodyNames   :: HashMap String [Int],
     fleets      :: HashMap String Fleet,
     viewSet     :: ViewSettings,
+    shiftKey    :: Bool,
     shell       :: Shell
   }
 

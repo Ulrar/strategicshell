@@ -20,7 +20,7 @@ import           Generation
 
 initial viewS =
   let (uni, nMap) = genUniverse Map.empty in
-  (Model uni nMap Map.empty viewS (Shell Nothing []), Cmd.none)
+  (Model uni nMap Map.empty viewS False (Shell Nothing []), Cmd.none)
 
 update :: Model -> Action -> (Model, Cmd SDLEngine Action)
 update model (WindowResized size) = (model { viewSet = changeScreenSize size $ viewSet model }, Cmd.none)
@@ -28,9 +28,14 @@ update model (Tick t)             = (model { systems = L.map (\s -> SolarSystem 
 -- Prompt
 update model (KeyPressed KB.ReturnKey) = (togglePrompt model, Cmd.none)
 update model (KeyPressed k)            = (processPrompt model k, Cmd.none)
+-- Shift Key
+update model (KeyUp KB.RightShiftKey)   = (model { shiftKey = False }, Cmd.none)
+update model (KeyDown KB.RightShiftKey) = (model { shiftKey = True }, Cmd.none)
+update model (KeyUp _)                  = (model, Cmd.none)
+update model (KeyDown _)                = (model, Cmd.none)
 
 subscriptions :: Sub SDLEngine Action
-subscriptions = Sub.batch [Time.every (Time.millisecond * 70) Tick, Win.resizes WindowResized, KB.presses KeyPressed]
+subscriptions = Sub.batch [Time.every (Time.millisecond * 70) Tick, Win.resizes WindowResized, KB.presses KeyPressed, KB.ups KeyUp, KB.downs KeyDown]
 
 main :: IO ()
 main = do

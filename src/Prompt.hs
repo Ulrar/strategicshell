@@ -6,6 +6,7 @@ where
 
 import           Control.Lens
 import           Linear.V2           (V2(V2))
+import           Data.Char           (toUpper)
 import qualified Helm.Keyboard       as KB
 import qualified Data.List           as L
 import qualified Data.HashMap.Strict as Map
@@ -93,7 +94,7 @@ processPrompt model key =
   case prompt s of
     Just cmd -> case key of
       KB.BackspaceKey   -> if null cmd then model else model { shell = s { prompt = Just $ init cmd } }
-      key'              -> model { shell = s { prompt = Just $ cmd ++ hKeyToChar key'} }
+      key'              -> model { shell = s { prompt = Just $ cmd ++ hKeyToChar (shiftKey model) key'} }
     Nothing             -> case key of
       -- Zooming
       KB.KeypadPlusKey  -> model { viewSet = changeZoom   0.1  $ viewSet model }
@@ -111,7 +112,7 @@ processPrompt model key =
 -- Test
 spawnFleet = Map.insert "f1" Fleet { fpos = V2 150 150, fSysId = 0, speed = 10, fdest = Nothing, fname = "f1", ships = [Ship { hp = 100 }] }
 
-hKeyToChar k = case k of
+keyCodeToChar k = case k of
   KB.AKey       -> "a"
   KB.BKey       -> "b"
   KB.CKey       -> "c"
@@ -138,6 +139,7 @@ hKeyToChar k = case k of
   KB.XKey       -> "x"
   KB.YKey       -> "y"
   KB.ZKey       -> "z"
+  KB.Number0Key -> "0"
   KB.Number1Key -> "1"
   KB.Number2Key -> "2"
   KB.Number3Key -> "3"
@@ -149,3 +151,8 @@ hKeyToChar k = case k of
   KB.Number9Key -> "9"
   KB.SpaceKey   -> " "
   KB.MinusKey   -> "-"
+  _             -> ""
+
+hKeyToChar sk k =
+  let key = keyCodeToChar k in
+  if sk then L.map toUpper key else key
