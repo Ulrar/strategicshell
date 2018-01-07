@@ -23,19 +23,34 @@ initial viewS =
   (Model uni nMap Map.empty viewS False (Shell Nothing []), Cmd.none)
 
 update :: Model -> Action -> (Model, Cmd SDLEngine Action)
-update model (WindowResized size) = (model { viewSet = changeScreenSize size $ viewSet model }, Cmd.none)
-update model (Tick t)             = (model { systems = L.map (\s -> SolarSystem (makeOrbit (V2 0 0) $ sun s)) $ systems model, fleets = Map.map makeFleetMove $ fleets model }, Cmd.none)
+update model (WindowResized size) =
+  ( model { viewSet = changeScreenSize size $ viewSet model }
+  , Cmd.none
+  )
+update model (Tick t)             = let syst = systems model in
+  ( model
+      { systems = L.map (\s -> SolarSystem (makeOrbit (V2 0 0) $ sun s)) syst
+      , fleets = Map.map makeFleetMove $ fleets model
+      }
+  , Cmd.none
+  )
 -- Prompt
 update model (KeyPressed KB.ReturnKey) = (togglePrompt model, Cmd.none)
 update model (KeyPressed k)            = (processKey model k, Cmd.none)
 -- Shift Key
-update model (KeyUp KB.RightShiftKey)   = (model { shiftKey = False }, Cmd.none)
-update model (KeyDown KB.RightShiftKey) = (model { shiftKey = True }, Cmd.none)
-update model (KeyUp _)                  = (model, Cmd.none)
+update model (KeyUp   KB.RightShiftKey) = (model { shiftKey = False }, Cmd.none)
+update model (KeyDown KB.RightShiftKey) = (model { shiftKey = True  }, Cmd.none)
+update model (KeyUp   _)                = (model, Cmd.none)
 update model (KeyDown _)                = (model, Cmd.none)
 
 subscriptions :: Sub SDLEngine Action
-subscriptions = Sub.batch [Time.every (Time.millisecond * 70) Tick, Win.resizes WindowResized, KB.presses KeyPressed, KB.ups KeyUp, KB.downs KeyDown]
+subscriptions = Sub.batch
+  [ Time.every (Time.millisecond * 70) Tick
+  , Win.resizes WindowResized
+  , KB.presses KeyPressed
+  , KB.ups KeyUp
+  , KB.downs KeyDown
+  ]
 
 main :: IO ()
 main = do
