@@ -37,6 +37,27 @@ lookupBody (n:t) sl = case sl ^? element n of
   Nothing -> Nothing
   Just s  -> getBody t (cbodies $ sun s)
 
+updateBodyInSystem :: (Body -> Body) -> [Int] -> [Body] -> [Body]
+updateBodyInSystem _ [] bl    = bl
+updateBodyInSystem f [n] bl   = case bl ^? element n of
+  Nothing -> bl
+  Just b  -> bl & element n .~ f b
+updateBodyInSystem f (n:t) bl = case bl ^? element n of
+  Nothing -> bl
+  Just b  ->
+    bl & element n .~ b { cbodies = updateBodyInSystem f t (cbodies b) }
+
+updateBody :: (Body -> Body) -> [Int] -> [SolarSystem] -> [SolarSystem]
+updateBody _ [] sl    = sl
+updateBody f [n] sl   = case sl ^? element n of
+  Nothing -> sl
+  Just s  -> sl & element n .~ s { sun = f $ sun s }
+updateBody f (n:t) sl = case sl ^? element n of
+  Nothing -> sl
+  Just s  -> let b = sun s in
+    sl & element n .~
+      s { sun = b { cbodies = updateBodyInSystem f t $ cbodies b } }
+
 resetPrompt model t =
   let s = shell model in
   let h = history s in
@@ -72,10 +93,22 @@ moveFunc model _            =
   let s = shell model in
   resetPrompt model "usage : move <fleet name> <body name>"
 
+renameBodyFunc model [curName, newName] =
+  case Map.lookup curName $ bodyNames model of
+    Nothing -> resetPrompt model $ "No body by that name : " ++ curName
+    Just x  ->
+      let nm = Map.insert newName x $ Map.delete curName $ bodyNames model in
+      let sl = updateBody (\b -> b { bname = newName }) x $ systems model in
+      resetPrompt (model { bodyNames = nm, systems = sl })
+      $ "Renamed" ++ curName ++ " to " ++ newName
+renameBodyFunc model _                  =
+  let s = shell model in
+  resetPrompt model "usage : renameBody <old name> <new name>"
+
 funcList :: [(String, Model -> [String] -> Model)]
 funcList =
-  [
-    ("move", moveFunc)
+  [ ("move"      , moveFunc)
+  , ("renameBody", renameBodyFunc)
   ]
 
 execCommand :: Model -> String -> Model
